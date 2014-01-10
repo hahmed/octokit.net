@@ -1,6 +1,7 @@
 ﻿using Octokit.Internal;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ namespace Octokit
     /// <summary>
     /// Base class for searching issues/code/users/repos
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1012:AbstractTypesShouldNotHaveConstructors")]
     public abstract class BaseSearchRequest
     {
         public BaseSearchRequest(string term)
@@ -29,7 +31,7 @@ namespace Octokit
         /// <summary>
         /// The sort field
         /// </summary>
-        public override string Sort
+        public abstract string Sort
         {
             get;
             set;
@@ -64,6 +66,18 @@ namespace Octokit
         public abstract string MergedQualifiers();
 
         /// <summary>
+        /// Add qualifiers onto the search term
+        /// </summary>
+        private string TermAndQualifiers
+        {
+            get
+            {
+                var mergedParameters = MergedQualifiers();
+                return Term + (mergedParameters.IsNotBlank() ? "+" + mergedParameters : "");
+            }
+        }
+
+        /// <summary>
         /// Get the query parameters that will be appending onto the search
         /// </summary>
         public System.Collections.Generic.IDictionary<string, string> Parameters
@@ -71,12 +85,11 @@ namespace Octokit
             get
             {
                 var d = new System.Collections.Generic.Dictionary<string, string>();
-                d.Add("page", Page.ToString());
-                d.Add("per_page", PerPage.ToString());
+                d.Add("page", Page.ToString(CultureInfo.CurrentCulture));
+                d.Add("per_page", PerPage.ToString(CultureInfo.CurrentCulture));
                 d.Add("sort", Sort);
                 d.Add("order", SortOrder);
-                var mergedQualifiers = MergedQualifiers();
-                d.Add("q", Term + (mergedQualifiers.IsNotBlank() ? "+" + mergedQualifiers : "")); //add qualifiers onto the search term
+                d.Add("q", TermAndQualifiers);
                 return d;
             }
         }
