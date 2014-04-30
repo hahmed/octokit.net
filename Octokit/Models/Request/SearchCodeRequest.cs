@@ -16,7 +16,11 @@ namespace Octokit
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class SearchCodeRequest : BaseSearchRequest
     {
-        public SearchCodeRequest(string term) : base(term) { }
+        public SearchCodeRequest(string term, string repo) : base(term)
+        {
+            Ensure.ArgumentNotNullOrEmptyString(repo, "repo");
+            Repo = repo;
+        }
 
         /// <summary>
         /// Optional Sort field. Can only be indexed, which indicates how recently 
