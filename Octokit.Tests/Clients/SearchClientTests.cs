@@ -1028,7 +1028,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                client.SearchCode(new SearchCodeRequest("something"));
+                client.SearchCode(new SearchCodeRequest("something", "jquery/jquery"));
                 connection.Received().Get<SearchCodeResult>(
                     Arg.Is<Uri>(u => u.ToString() == "search/code"),
                     Arg.Any<Dictionary<string, string>>());
@@ -1046,7 +1046,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
 
                 client.SearchCode(request);
 
@@ -1060,7 +1060,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.SortField = CodeSearchSort.Indexed;
 
                 client.SearchCode(request);
@@ -1075,7 +1075,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.SortField = CodeSearchSort.Indexed;
                 request.Order = SortDirection.Ascending;
 
@@ -1093,7 +1093,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
 
                 client.SearchCode(request);
 
@@ -1107,7 +1107,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.In = new[] { CodeInQualifier.File };
 
 
@@ -1123,7 +1123,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.In = new[] { CodeInQualifier.File, CodeInQualifier.Path };
 
                 client.SearchCode(request);
@@ -1138,7 +1138,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Language = Language.CSharp;
 
                 client.SearchCode(request);
@@ -1153,7 +1153,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Forks = true;
 
                 client.SearchCode(request);
@@ -1168,7 +1168,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Size = Range.GreaterThan(10);
 
                 client.SearchCode(request);
@@ -1183,7 +1183,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Size = Range.GreaterThanOrEquals(10);
 
                 client.SearchCode(request);
@@ -1198,7 +1198,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Size = Range.LessThan(10);
 
                 client.SearchCode(request);
@@ -1213,7 +1213,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Size = Range.LessThanOrEquals(10);
 
                 client.SearchCode(request);
@@ -1228,7 +1228,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Size = new Range(10, 100);
 
                 client.SearchCode(request);
@@ -1243,7 +1243,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Path = "app/public";
 
                 client.SearchCode(request);
@@ -1258,7 +1258,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Extension = "cs";
 
                 client.SearchCode(request);
@@ -1273,7 +1273,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.User = "alfhenrik";
 
                 client.SearchCode(request);
@@ -1288,7 +1288,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Repo = "octokit.net";
 
                 client.SearchCode(request);
@@ -1303,7 +1303,7 @@ namespace Octokit.Tests.Clients
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new SearchClient(connection);
-                var request = new SearchCodeRequest("something");
+                var request = new SearchCodeRequest("something", "jquery/jquery");
                 request.Repo = "octokit.net";
                 request.Path = "tools/FAKE.core";
                 request.Extension = "fs";

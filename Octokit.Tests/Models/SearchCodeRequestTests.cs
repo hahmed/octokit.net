@@ -9,8 +9,8 @@ public class SearchCodeRequestTests
         [Fact]
         public void ReturnsAReadOnlyDictionary()
         {
-            var request = new SearchCodeRequest("test");
-            
+            var request = new SearchCodeRequest("test", "jquery/jquery");
+
             var result = request.MergedQualifiers();
 
             // If I can cast this to a writeable collection, then that defeats the purpose of a read only.
