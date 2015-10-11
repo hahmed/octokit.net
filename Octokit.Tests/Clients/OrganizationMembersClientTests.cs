@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using NSubstitute;
 using Octokit.Internal;
 using Octokit.Tests.Helpers;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Octokit.Tests.Clients
 {
@@ -41,12 +38,34 @@ namespace Octokit.Tests.Clients
             }
 
             [Fact]
-            public void EnsureNonNullArguments()
+            public async Task EnsureNonNullArguments()
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                Assert.Throws<ArgumentNullException>(() => orgMembers.GetAll(null));
-                Assert.Throws<ArgumentException>(() => orgMembers.GetAll(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.GetAll(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.GetAll(""));
+            }
+
+            [Fact]
+            public void AllFilterRequestTheCorrectUrl()
+            {
+                var client = Substitute.For<IApiConnection>();
+                var orgMembersClient = new OrganizationMembersClient(client);
+
+                orgMembersClient.GetAll("org", OrganizationMembersFilter.All);
+
+                client.Received().GetAll<User>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/members?filter=all"));
+            }
+
+            [Fact]
+            public void TwoFactorFilterRequestTheCorrectUrl()
+            {
+                var client = Substitute.For<IApiConnection>();
+                var orgMembersClient = new OrganizationMembersClient(client);
+
+                orgMembersClient.GetAll("org", OrganizationMembersFilter.TwoFactorAuthenticationDisabled);
+
+                client.Received().GetAll<User>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/members?filter=2fa_disabled"));
             }
         }
 
@@ -58,18 +77,18 @@ namespace Octokit.Tests.Clients
                 var client = Substitute.For<IApiConnection>();
                 var orgMembers = new OrganizationMembersClient(client);
 
-                orgMembers.GetPublic("org");
+                orgMembers.GetAllPublic("org");
 
                 client.Received().GetAll<User>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/public_members"));
             }
 
             [Fact]
-            public void EnsureNonNullArguments()
+            public async Task EnsureNonNullArguments()
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                Assert.Throws<ArgumentNullException>(() => orgMembers.GetPublic(null));
-                Assert.Throws<ArgumentException>(() => orgMembers.GetPublic(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.GetAllPublic(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.GetAllPublic(""));
             }
         }
 
@@ -81,8 +100,8 @@ namespace Octokit.Tests.Clients
             [InlineData(HttpStatusCode.Found, false)]
             public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = status });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/members/username"),
                     null, null).Returns(response);
@@ -98,8 +117,8 @@ namespace Octokit.Tests.Clients
             [Fact]
             public async Task ThrowsExceptionForInvalidStatusCode()
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/members/username"),
                     null, null).Returns(response);
@@ -107,7 +126,7 @@ namespace Octokit.Tests.Clients
                 apiConnection.Connection.Returns(connection);
                 var client = new OrganizationMembersClient(apiConnection);
 
-                await AssertEx.Throws<ApiException>(async () => await client.CheckMember("org", "username"));
+                await Assert.ThrowsAsync<ApiException>(() => client.CheckMember("org", "username"));
             }
 
             [Fact]
@@ -115,10 +134,10 @@ namespace Octokit.Tests.Clients
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.CheckMember(null, "username"));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.CheckMember(null, ""));
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.CheckMember("org", null));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.CheckMember("", null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.CheckMember(null, "username"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.CheckMember(null, ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.CheckMember("org", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.CheckMember("", null));
             }
         }
 
@@ -129,8 +148,8 @@ namespace Octokit.Tests.Clients
             [InlineData(HttpStatusCode.NotFound, false)]
             public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = status });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/public_members/username"),
                     null, null).Returns(response);
@@ -146,8 +165,8 @@ namespace Octokit.Tests.Clients
             [Fact]
             public async Task ThrowsExceptionForInvalidStatusCode()
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/public_members/username"),
                     null, null).Returns(response);
@@ -155,7 +174,7 @@ namespace Octokit.Tests.Clients
                 apiConnection.Connection.Returns(connection);
                 var client = new OrganizationMembersClient(apiConnection);
 
-                await AssertEx.Throws<ApiException>(async () => await client.CheckMemberPublic("org", "username"));
+                await Assert.ThrowsAsync<ApiException>(() => client.CheckMemberPublic("org", "username"));
             }
 
             [Fact]
@@ -163,10 +182,10 @@ namespace Octokit.Tests.Clients
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.CheckMemberPublic(null, "username"));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.CheckMemberPublic("", "username"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.CheckMemberPublic("org", null));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.CheckMemberPublic("org", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.CheckMemberPublic(null, "username"));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.CheckMemberPublic("", "username"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.CheckMemberPublic("org", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.CheckMemberPublic("org", ""));
             }
         }
 
@@ -188,10 +207,10 @@ namespace Octokit.Tests.Clients
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.Delete(null, "username"));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.Delete("", "username"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.Delete("org", null));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.Delete("org", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.Delete(null, "username"));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.Delete("", "username"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.Delete("org", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.Delete("org", ""));
             }
         }
 
@@ -201,8 +220,8 @@ namespace Octokit.Tests.Clients
             [InlineData(HttpStatusCode.NoContent, true)]
             public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = status });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Put<object>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/public_members/username"),
                     Args.Object).Returns(response);
@@ -218,8 +237,8 @@ namespace Octokit.Tests.Clients
             [Fact]
             public async Task ThrowsExceptionForInvalidStatusCode()
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Put<object>(Arg.Is<Uri>(u => u.ToString() == "orgs/org/public_members/username"),
                     new { }).Returns(response);
@@ -227,7 +246,7 @@ namespace Octokit.Tests.Clients
                 apiConnection.Connection.Returns(connection);
                 var client = new OrganizationMembersClient(apiConnection);
 
-                await AssertEx.Throws<ApiException>(async () => await client.Publicize("org", "username"));
+                await Assert.ThrowsAsync<ApiException>(() => client.Publicize("org", "username"));
             }
 
             [Fact]
@@ -235,10 +254,10 @@ namespace Octokit.Tests.Clients
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.Publicize(null, "username"));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.Publicize("", "username"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.Publicize("org", null));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.Publicize("org", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.Publicize(null, "username"));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.Publicize("", "username"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.Publicize("org", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.Publicize("org", ""));
             }
         }
 
@@ -260,10 +279,10 @@ namespace Octokit.Tests.Clients
             {
                 var orgMembers = new OrganizationMembersClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.Conceal(null, "username"));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.Conceal("", "username"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await orgMembers.Conceal("org", null));
-                await AssertEx.Throws<ArgumentException>(async () => await orgMembers.Conceal("org", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.Conceal(null, "username"));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.Conceal("", "username"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => orgMembers.Conceal("org", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => orgMembers.Conceal("org", ""));
             }
         }
     }

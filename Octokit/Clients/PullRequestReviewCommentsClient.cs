@@ -4,6 +4,12 @@ using System.Threading.Tasks;
 
 namespace Octokit
 {
+    /// <summary>
+    /// A client for GitHub's Pull Request Review Comments API.
+    /// </summary>
+    /// <remarks>
+    /// See the <a href="https://developer.github.com/v3/pulls/comments/">Review Comments API documentation</a> for more information.
+    /// </remarks>
     public class PullRequestReviewCommentsClient : ApiClient, IPullRequestReviewCommentsClient
     {
         public PullRequestReviewCommentsClient(IApiConnection apiConnection)
@@ -34,9 +40,9 @@ namespace Octokit
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <returns>The list of <see cref="PullRequestReviewComment"/>s for the specified repository</returns>
-        public Task<IReadOnlyList<PullRequestReviewComment>> GetForRepository(string owner, string name)
+        public Task<IReadOnlyList<PullRequestReviewComment>> GetAllForRepository(string owner, string name)
         {
-            return GetForRepository(owner, name, new PullRequestReviewCommentRequest());
+            return GetAllForRepository(owner, name, new PullRequestReviewCommentRequest());
         }
 
         /// <summary>
@@ -47,7 +53,7 @@ namespace Octokit
         /// <param name="name">The name of the repository</param>
         /// <param name="request">The sorting <see cref="PullRequestReviewCommentRequest">parameters</see></param>
         /// <returns>The list of <see cref="PullRequestReviewComment"/>s for the specified repository</returns>
-        public Task<IReadOnlyList<PullRequestReviewComment>> GetForRepository(string owner, string name, PullRequestReviewCommentRequest request)
+        public Task<IReadOnlyList<PullRequestReviewComment>> GetAllForRepository(string owner, string name, PullRequestReviewCommentRequest request)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(name, "name");
@@ -89,12 +95,12 @@ namespace Octokit
 
             var response = await ApiConnection.Connection.Post<PullRequestReviewComment>(ApiUrls.PullRequestReviewComments(owner, name, number), comment, null, null).ConfigureAwait(false);
 
-            if (response.StatusCode != HttpStatusCode.Created)
+            if (response.HttpResponse.StatusCode != HttpStatusCode.Created)
             {
-                throw new ApiException("Invalid Status Code returned. Expected a 201", response.StatusCode);
+                throw new ApiException("Invalid Status Code returned. Expected a 201", response.HttpResponse.StatusCode);
             }
 
-            return response.BodyAsObject;
+            return response.Body;
         }
 
         /// <summary>
@@ -114,12 +120,12 @@ namespace Octokit
 
             var response = await ApiConnection.Connection.Post<PullRequestReviewComment>(ApiUrls.PullRequestReviewComments(owner, name, number), comment, null, null).ConfigureAwait(false);
 
-            if (response.StatusCode != HttpStatusCode.Created)
+            if (response.HttpResponse.StatusCode != HttpStatusCode.Created)
             {
-                throw new ApiException("Invalid Status Code returned. Expected a 201", response.StatusCode);
+                throw new ApiException("Invalid Status Code returned. Expected a 201", response.HttpResponse.StatusCode);
             }
 
-            return response.BodyAsObject;
+            return response.Body;
         }
 
         /// <summary>

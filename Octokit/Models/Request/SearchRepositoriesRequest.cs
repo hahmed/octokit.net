@@ -1,10 +1,10 @@
-using System.Diagnostics;
-using Octokit.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+using Octokit.Internal;
 
 namespace Octokit
 {
@@ -15,6 +15,17 @@ namespace Octokit
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class SearchRepositoriesRequest : BaseSearchRequest
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SearchRepositoriesRequest"/> class.
+        /// </summary>
+        public SearchRepositoriesRequest()
+        {
+            Order = SortDirection.Descending;
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SearchRepositoriesRequest"/> class.
+        /// </summary>
+        /// <param name="term">The search term.</param>
         public SearchRepositoriesRequest(string term)
             : base(term)
         {
@@ -101,7 +112,7 @@ namespace Octokit
         /// </summary>
         public DateRange Updated { get; set; }
 
-        public override IReadOnlyCollection<string> MergedQualifiers()
+        public override IReadOnlyList<string> MergedQualifiers()
         {
             var parameters = new List<string>();
 
@@ -176,14 +187,14 @@ namespace Octokit
     /// <summary>
     /// Helper class in generating the range values for a qualifer e.g. In or Size qualifiers
     /// </summary>
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class Range
     {
-        private string query = string.Empty;
+        private readonly string query = string.Empty;
 
         /// <summary>
         /// Matches repositories that are <param name="size">size</param> MB exactly
         /// </summary>
-        /// <param name="size"></param>
         [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.Int32.ToString")]
         public Range(int size)
         {
@@ -191,18 +202,16 @@ namespace Octokit
         }
 
         /// <summary>
-        /// Matches repositories that are between <see cref="minSize"/> and <see cref="maxSize"/> KB
+        /// Matches repositories that are between <param name="minSize"/> and <param name="maxSize"/> KB
         /// </summary>
-        /// <param name="minSize"></param>
-        /// <param name="maxSize"></param>
         public Range(int minSize, int maxSize)
         {
             query = string.Format(CultureInfo.InvariantCulture, "{0}..{1}", minSize, maxSize);
         }
 
         /// <summary>
-        /// Matches repositories with regards to the size <see cref="size"/> 
-        /// We will use the <see cref="op"/> to see what operator will be applied to the size qualifier
+        /// Matches repositories with regards to the size <param name="size"/> 
+        /// We will use the <param name="op"/> to see what operator will be applied to the size qualifier
         /// </summary>
         public Range(int size, SearchQualifierOperator op)
         {
@@ -221,6 +230,11 @@ namespace Octokit
                     query = string.Format(CultureInfo.InvariantCulture, ">={0}", size);
                     break;
             }
+        }
+
+        internal string DebuggerDisplay
+        {
+            get { return String.Format(CultureInfo.InvariantCulture, "Query: {0}", query); }
         }
 
         /// <summary>
@@ -265,16 +279,15 @@ namespace Octokit
     /// helper class in generating the date range values for the date qualifier e.g.
     /// https://help.github.com/articles/searching-repositories#created-and-last-updated
     /// </summary>
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class DateRange
     {
         private readonly string query = string.Empty;
 
         /// <summary>
-        /// Matches repositories with regards to the date <see cref="date"/> 
-        /// We will use the <see cref="op"/> to see what operator will be applied to the date qualifier
+        /// Matches repositories with regards to the <param name="date"/>.
+        /// We will use the <param name="op"/> to see what operator will be applied to the date qualifier
         /// </summary>
-        /// <param name="date">The date</param>
-        /// <param name="op">And its search operator</param>
         public DateRange(DateTime date, SearchQualifierOperator op)
         {
             switch (op)
@@ -292,6 +305,21 @@ namespace Octokit
                     query = string.Format(CultureInfo.InvariantCulture, ">={0:yyyy-MM-dd}", date);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Matches repositories with regards to both the <param name="from"/> and <param name="to"/> dates.
+        /// </summary>
+        /// <param name="from">earlier date of the two</param>
+        /// <param name="to">latter date of the two</param>
+        public DateRange(DateTime from, DateTime to)
+        {
+            query = string.Format(CultureInfo.InvariantCulture, "{0:yyyy-MM-dd}..{1:yyyy-MM-dd}", from, to);
+        }
+
+        internal string DebuggerDisplay
+        {
+            get { return String.Format(CultureInfo.InvariantCulture, "Query: {0}", query); }
         }
 
         /// <summary>
@@ -338,6 +366,18 @@ namespace Octokit
             return new DateRange(date, SearchQualifierOperator.GreaterThanOrEqualTo);
         }
 
+        /// <summary>
+        /// helper method to create a bounded Date Comparison
+        /// e.g. 2015-08-01..2015-10-31
+        /// </summary>
+        /// <param name="from">earlier date of the two</param>
+        /// <param name="to">latter date of the two</param>
+        /// <returns><see cref="DateRange"/></returns>
+        public static DateRange Between(DateTime from, DateTime to)
+        {
+            return new DateRange(from, to);
+         }
+
         public override string ToString()
         {
             return query;
@@ -350,6 +390,7 @@ namespace Octokit
     /// </summary>
     public enum Language
     {
+#pragma warning disable 1591
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Abap")]
         Abap,
         [Parameter(Value = "ActionScript")]
@@ -701,6 +742,7 @@ namespace Octokit
         Xtend,
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Yaml")]
         Yaml
+#pragma warning restore 1591
     }
 
     /// <summary>

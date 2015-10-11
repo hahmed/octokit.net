@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Octokit
@@ -197,6 +196,34 @@ namespace Octokit
         }
 
         /// <summary>
+        /// List gist commits
+        /// </summary>
+        /// <remarks>
+        /// http://developer.github.com/v3/gists/#list-gists-commits
+        /// </remarks>
+        /// <param name="id">The id of the gist</param>
+        public Task<IReadOnlyList<GistHistory>> GetAllCommits(string id)
+        {
+            Ensure.ArgumentNotNullOrEmptyString(id, "id");
+
+            return ApiConnection.GetAll<GistHistory>(ApiUrls.GistCommits(id));
+        }
+
+        /// <summary>
+        /// List gist forks
+        /// </summary>
+        /// <remarks>
+        /// http://developer.github.com/v3/gists/#list-gists-forks
+        /// </remarks>
+        /// <param name="id">The id of the gist</param>
+        public Task<IReadOnlyList<GistFork>> GetAllForks(string id)
+        {
+            Ensure.ArgumentNotNullOrEmptyString(id, "id");
+
+            return ApiConnection.GetAll<GistFork>(ApiUrls.ForkGist(id));
+        }
+
+        /// <summary>
         /// Edits a gist
         /// </summary>
         /// <remarks>
@@ -263,11 +290,7 @@ namespace Octokit
             {
                 var response = await Connection.Get<object>(ApiUrls.StarGist(id), null, null)
                                                .ConfigureAwait(false);
-                if (response.StatusCode != HttpStatusCode.NotFound && response.StatusCode != HttpStatusCode.NoContent)
-                {
-                    throw new ApiException("Invalid Status Code returned. Expected a 204 or a 404", response.StatusCode);
-                }
-                return response.StatusCode == HttpStatusCode.NoContent;
+                return response.HttpResponse.IsTrue();
             }
             catch (NotFoundException)
             {

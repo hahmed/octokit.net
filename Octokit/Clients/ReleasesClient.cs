@@ -1,7 +1,7 @@
 ﻿#if NET_45
+using System.Threading.Tasks;
 using System.Collections.Generic;
 #endif
-using System.Threading.Tasks;
 
 namespace Octokit
 {
@@ -71,7 +71,7 @@ namespace Octokit
         /// <param name="data">A description of the release to create</param>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The created <see cref="Release"/>.</returns>
-        public Task<Release> Create(string owner, string name, ReleaseUpdate data)
+        public Task<Release> Create(string owner, string name, NewRelease data)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(name, "repository");
@@ -134,7 +134,7 @@ namespace Octokit
         /// <param name="id">The id of the <see cref="Release"/>.</param>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The list of <see cref="ReleaseAsset"/> for the specified release of the specified repository.</returns>
-        public Task<IReadOnlyList<ReleaseAsset>> GetAssets(string owner, string name, int id)
+        public Task<IReadOnlyList<ReleaseAsset>> GetAllAssets(string owner, string name, int id)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(name, "name");
@@ -159,6 +159,17 @@ namespace Octokit
             Ensure.ArgumentNotNull(data, "data");
 
             var endpoint = release.UploadUrl.ExpandUriTemplate(new { name = data.FileName });
+
+            if (data.Timeout.HasValue)
+            {
+                return ApiConnection.Post<ReleaseAsset>(
+                    endpoint,
+                    data.RawData,
+                    "application/vnd.github.v3",
+                    data.ContentType,
+                    data.Timeout.GetValueOrDefault());
+            }
+
             return ApiConnection.Post<ReleaseAsset>(
                 endpoint,
                 data.RawData,

@@ -32,9 +32,14 @@ namespace Octokit
         public string Note { get; set; }
 
         /// <summary>
-        // An optional URL to remind you what app the OAuth token is for.
+        /// An optional URL to remind you what app the OAuth token is for.
         /// </summary>
         public string NoteUrl { get; set; }
+
+        /// <summary>
+        /// Optional parameter that allows an OAuth application to create multiple authorizations for a single user
+        /// </summary>
+        public string Fingerprint { get; set; }
 
         internal string DebuggerDisplay
         {

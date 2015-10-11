@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -12,15 +13,26 @@ namespace Octokit
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class Participation
     {
+        public Participation() { }
+
+        public Participation(IEnumerable<int> all, IEnumerable<int> owner)
+        {
+            Ensure.ArgumentNotNull(all, "all");
+            Ensure.ArgumentNotNull(owner, "owner");
+
+            All = new ReadOnlyCollection<int>(all.ToList());
+            Owner = new ReadOnlyCollection<int>(owner.ToList());
+        }
+
         /// <summary>
         /// Returns the commit counts made each week, for the last 52 weeks
         /// </summary>
-        public IEnumerable<int> All { get; set; }
+        public IReadOnlyList<int> All { get; protected set; }
 
         /// <summary>
         /// Returns the commit counts made by the owner each week, for the last 52 weeks
         /// </summary>
-        public IEnumerable<int> Owner { get; set; }
+        public IReadOnlyList<int> Owner { get; protected set; }
 
         /// <summary>
         /// The total number of commits made by the owner in the last 52 weeks.

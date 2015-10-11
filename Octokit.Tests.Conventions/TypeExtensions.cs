@@ -65,7 +65,7 @@ namespace Octokit.Tests.Conventions
 
         public static bool IsModel(this Type type)
         {
-            return !type.IsInterface && type.Assembly == typeof(AuthorizationUpdate).Assembly;
+            return !type.IsInterface && !type.IsEnum && type.Assembly == typeof(AuthorizationUpdate).Assembly;
         }
 
         public static bool IsClientInterface(this Type type)
@@ -98,6 +98,20 @@ namespace Octokit.Tests.Conventions
         public static Type GetGenericArgument(this Type type)
         {
             return type.GetGenericArguments()[0];
+        }
+
+        public static bool IsReadOnlyCollection(this Type type)
+        {
+            var isReadOnlyList = type.HasGenericTypeDefinition(typeof(IReadOnlyList<>));
+
+            var isReadOnlyDictionary = type.HasGenericTypeDefinition(typeof(IReadOnlyDictionary<,>));
+
+            return isReadOnlyList || isReadOnlyDictionary;
+        }
+
+        private static bool HasGenericTypeDefinition(this Type type, Type genericTypeDefinition)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == genericTypeDefinition;
         }
     }
 

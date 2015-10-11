@@ -13,12 +13,30 @@ namespace Octokit
         static readonly Uri _currentUserStars = new Uri("user/starred", UriKind.Relative);
         static readonly Uri _currentUserWatched = new Uri("user/subscriptions", UriKind.Relative);
         static readonly Uri _currentUserEmailsEndpoint = new Uri("user/emails", UriKind.Relative);
-        static readonly Uri _currentUserAuthorizationsEndpoint = new Uri("authorizations", UriKind.Relative);
         static readonly Uri _currentUserNotificationsEndpoint = new Uri("notifications", UriKind.Relative);
         static readonly Uri _currentUserAllIssues = new Uri("issues", UriKind.Relative);
         static readonly Uri _currentUserOwnedAndMemberIssues = new Uri("user/issues", UriKind.Relative);
         static readonly Uri _oauthAuthorize = new Uri("login/oauth/authorize", UriKind.Relative);
         static readonly Uri _oauthAccesToken = new Uri("login/oauth/access_token", UriKind.Relative);
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that returns all public repositories in
+        /// response to a GET request.
+        /// </summary>
+        public static Uri AllPublicRepositories()
+        {
+            return "/repositories".FormatUri();
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that returns all public repositories in
+        /// response to a GET request.
+        /// </summary>
+       /// <param name="since">The integer ID of the last Repository that you’ve seen.</param>
+        public static Uri AllPublicRepositories(long since)
+        {
+            return "/repositories?since={0}".FormatUri(since);
+        }
 
         /// <summary>
         /// Returns the <see cref="Uri"/> that returns all of the repositories for the currently logged in user in
@@ -146,15 +164,6 @@ namespace Octokit
         }
 
         /// <summary>
-        /// Returns the <see cref="Uri"/> that returns all of the authorizations for the currently logged in user.
-        /// </summary>
-        /// <returns></returns>
-        public static Uri Authorizations()
-        {
-            return _currentUserAuthorizationsEndpoint;
-        }
-
-        /// <summary>
         /// Returns the <see cref="Uri"/> that returns all of the notifications for the currently logged in user.
         /// </summary>
         /// <returns></returns>
@@ -173,6 +182,26 @@ namespace Octokit
         public static Uri Notifications(string owner, string name)
         {
             return "repos/{0}/{1}/notifications".FormatUri(owner, name);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for the specified notification.
+        /// </summary>
+        /// <param name="id">The Id of the notification.</param>
+        /// <returns></returns>
+        public static Uri Notification(int id)
+        {
+            return "notifications/threads/{0}".FormatUri(id);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for the specified notification's subscription status.
+        /// </summary>
+        /// <param name="id">The Id of the notification.</param>
+        /// <returns></returns>
+        public static Uri NotificationSubscription(int id)
+        {
+            return "notifications/threads/{0}/subscription".FormatUri(id);
         }
 
         /// <summary>
@@ -336,7 +365,20 @@ namespace Octokit
         /// Returns the <see cref="Uri"/> that returns all of the members of the organization
         /// </summary>
         /// <param name="org">The organization</param>
-        /// <returns></returns>
+        /// <param name="filter">The member filter, <see cref="OrganizationMembersFilter"/></param>
+        /// <returns>The correct uri</returns>
+        public static Uri Members(string org, OrganizationMembersFilter filter)
+        {
+            return "orgs/{0}/members?filter={1}".FormatUri(org, filter.ToParameter());
+        }
+
+        /// <summary>
+        /// <see cref="Members(string, OrganizationMembersFilter)"/>
+        /// </summary>
+        /// <param name="org">The organization</param>
+        /// <param name="filter">The member filter</param>
+        /// <returns>The correct uri</returns>
+        [Obsolete("No longer supported, use Members(string, OrganizationMembersFilter)")]
         public static Uri Members(string org, string filter)
         {
             return "orgs/{0}/members?filter={1}".FormatUri(org, filter);
@@ -511,15 +553,97 @@ namespace Octokit
         }
 
         /// <summary>
+        /// Returns the <see cref="Uri"/> to use when creating a commit status for the specified reference.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <param name="reference">The reference (SHA, branch name, or tag name) to list commits for</param>
+        /// <returns></returns>
+        public static Uri CreateCommitStatus(string owner, string name, string reference)
+        {
+            return "repos/{0}/{1}/statuses/{2}".FormatUri(owner, name, reference);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that lists the repository hooks for the specified reference.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="repositoryName">The name of the repository</param>
+        /// <returns></returns>
+        public static Uri RepositoryHooks(string owner, string repositoryName)
+        {
+            return "repos/{0}/{1}/hooks".FormatUri(owner, repositoryName);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that gets the repository hook for the specified reference.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="repositoryName">The name of the repository</param>
+        /// <param name="hookId">The identifier of the repository hook</param>
+        /// <returns></returns>
+        public static Uri RepositoryHookById(string owner, string repositoryName, int hookId)
+        {
+            return "repos/{0}/{1}/hooks/{2}".FormatUri(owner, repositoryName, hookId);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that can tests a specified repository hook
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="repositoryName">The name of the repository</param>
+        /// <param name="hookId">The identifier of the repository hook</param>
+        /// <returns></returns>
+        public static Uri RepositoryHookTest(string owner, string repositoryName, int hookId)
+        {
+            return "repos/{0}/{1}/hooks/{2}/tests".FormatUri(owner, repositoryName, hookId);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that can ping a specified repository hook
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="repositoryName">The name of the repository</param>
+        /// <param name="hookId">The identifier of the repository hook</param>
+        /// <returns></returns>
+        public static Uri RepositoryHookPing(string owner, string repositoryName, int hookId)
+        {
+            return "repos/{0}/{1}/hooks/{2}/pings".FormatUri(owner, repositoryName, hookId);
+        }
+        
+        /// <summary>
         /// Returns the <see cref="Uri"/> that lists the commit statuses for the specified reference.
         /// </summary>
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <param name="reference">The reference (SHA, branch name, or tag name) to list commits for</param>
         /// <returns></returns>
-        public static Uri CommitStatus(string owner, string name, string reference)
+        public static Uri CommitStatuses(string owner, string name, string reference)
         {
-            return "repos/{0}/{1}/statuses/{2}".FormatUri(owner, name, reference);
+            return "repos/{0}/{1}/commits/{2}/statuses".FormatUri(owner, name, reference);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that returns a combined view of commit statuses for the specified reference.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <param name="reference">The reference (SHA, branch name, or tag name) to list commits for</param>
+        /// <returns></returns>
+        public static Uri CombinedCommitStatus(string owner, string name, string reference)
+        {
+            return "repos/{0}/{1}/commits/{2}/status".FormatUri(owner, name, reference);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> that lists the repository forks for the specified reference.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="repositoryName">The name of the repository</param>
+        /// <returns></returns>
+        public static Uri RepositoryForks(string owner, string repositoryName)
+        {
+            return "repos/{0}/{1}/forks".FormatUri(owner, repositoryName);
         }
 
         /// <summary>
@@ -648,7 +772,7 @@ namespace Octokit
         }
 
         /// <summary>
-        /// Returns the <see cref="Uri"/> for the specified commit.
+        /// Returns the <see cref="Uri"/> for the specified gist.
         /// </summary>
         /// <param name="id">The id of the gist</param>
         public static Uri Gist(string id)
@@ -656,26 +780,44 @@ namespace Octokit
             return "gists/{0}".FormatUri(id);
         }
 
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for the forks for the specified gist.
+        /// </summary>
+        /// <param name="id">The id of the gist</param>
         public static Uri ForkGist(string id)
         {
             return "gists/{0}/forks".FormatUri(id);
         }
 
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for all public gists.
+        /// </summary>
         public static Uri PublicGists()
         {
             return "gists/public".FormatUri();
         }
 
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for all started public gists.
+        /// </summary>
         public static Uri StarredGists()
         {
             return "gists/starred".FormatUri();
         }
 
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for all gists for a given user.
+        /// </summary>
+        /// <param name="user">The user to search for</param>
         public static Uri UsersGists(string user)
         {
             return "users/{0}/gists".FormatUri(user);
         }
 
+        /// <summary>
+        /// Returns the <see cref="Uri"/> to star a given gist.
+        /// </summary>
+        /// <param name="id">The id of the gist</param>
         public static Uri StarGist(string id)
         {
             return "gists/{0}/star".FormatUri(id);
@@ -685,9 +827,18 @@ namespace Octokit
         /// Returns the <see cref="Uri"/> for the comments for the specified gist.
         /// </summary>
         /// <param name="gistId">The id of the gist</param>
-        public static Uri GistComments(int gistId)
+        public static Uri GistComments(string gistId)
         {
             return "gists/{0}/comments".FormatUri(gistId);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for the commits for the specified gist.
+        /// </summary>
+        /// <param name="id">The id of the gist</param>
+        public static Uri GistCommits(string id)
+        {
+            return "gists/{0}/commits".FormatUri(id);
         }
 
         /// <summary>
@@ -735,12 +886,17 @@ namespace Octokit
             return "repos/{0}/{1}/pulls/{2}/commits".FormatUri(owner, name, number);
         }
 
+        public static Uri PullRequestFiles(string owner, string name, int number)
+        {
+            return "repos/{0}/{1}/pulls/{2}/files".FormatUri(owner, name, number);
+        }
+
         /// <summary>
         /// Returns the <see cref="Uri"/> for a spesific comment for the specified commit.
         /// </summary>
         /// <param name="gistId">The id of the gist</param>
         /// <param name="commentId">The id of the comment</param>
-        public static Uri GistComment(int gistId, int commentId)
+        public static Uri GistComment(string gistId, int commentId)
         {
             return "gists/{0}/comments/{1}".FormatUri(gistId, commentId);
         }
@@ -789,6 +945,17 @@ namespace Octokit
         public static Uri CreateCommit(string owner, string name)
         {
             return "repos/{0}/{1}/git/commits".FormatUri(owner, name);
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for creating a merge object.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <returns></returns>
+        public static Uri CreateMerge(string owner, string name)
+        {
+            return "repos/{0}/{1}/merges".FormatUri(owner, name);
         }
 
         /// <summary>
@@ -959,6 +1126,18 @@ namespace Octokit
         }
 
         /// <summary>
+        /// Returns the <see cref="Uri"/> for the specified tree.
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <param name="reference">The tree reference (SHA)</param>
+        /// <returns></returns>
+        public static Uri TreeRecursive(string owner, string name, string reference)
+        {
+            return "repos/{0}/{1}/git/trees/{2}?recursive=1".FormatUri(owner, name, reference);
+        }
+
+        /// <summary>
         /// returns the <see cref="Uri"/> for org teams 
         /// use for both Get and Create methods
         /// </summary>
@@ -970,9 +1149,20 @@ namespace Octokit
         }
 
         /// <summary>
-        /// returns the <see cref="Uri"/> for teams
+        /// Returns the <see cref="Uri"/> to discover teams 
+        /// for the current user
         /// </summary>
-        /// <param name="id"></param>
+        /// <returns></returns>
+        public static Uri UserTeams()
+        {
+            return "user/teams".FormatUri();
+        }
+
+        /// <summary>
+        /// Returns the <see cref="Uri"/> for teams
+        /// use for getting, updating, or deleting a <see cref="Team"/>.
+        /// </summary>
+        /// <param name="id">The id of the <see cref="Team"/>.</param>
         /// <returns></returns>
         public static Uri Teams(int id)
         {
@@ -986,7 +1176,7 @@ namespace Octokit
         /// <param name="login">The user login.</param>
         public static Uri TeamMember(int id, string login)
         {
-            return "teams/{0}/members/{1}".FormatUri(id, login);
+            return "teams/{0}/memberships/{1}".FormatUri(id, login);
         }
 
         /// <summary>
@@ -1311,6 +1501,58 @@ namespace Octokit
         public static Uri OauthAccessToken()
         {
             return _oauthAccesToken;
+        }
+
+        /// <summary>
+        /// Creates the relative <see cref="Uri"/> for getting the README of the specified repository
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <returns>The <see cref="Uri"/> for getting the README of the specified repository</returns>
+        public static Uri RepositoryReadme(string owner, string name)
+        {
+            return "repos/{0}/{1}/readme".FormatUri(owner, name);
+        }
+
+        /// <summary>
+        /// Creates the relative <see cref="Uri"/> for getting the contents of the specified repository's root
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <returns>The <see cref="Uri"/> for getting the contents of the specified repository's root</returns>
+        public static Uri RepositoryContent(string owner, string name)
+        {
+            return "repos/{0}/{1}/contents".FormatUri(owner, name);
+        }
+
+        /// <summary>
+        /// Creates the relative <see cref="Uri"/> for getting the contents of the specified repository and path
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <param name="path">The path of the contents to get</param>
+        /// <returns>The <see cref="Uri"/> for getting the contents of the specified repository and path</returns>
+        public static Uri RepositoryContent(string owner, string name, string path)
+        {
+            return "repos/{0}/{1}/contents/{2}".FormatUri(owner, name, path);
+        }
+
+        public static Uri RepositoryArchiveLink(string owner, string name, ArchiveFormat archiveFormat, string reference)
+        {
+            return "repos/{0}/{1}/{2}/{3}".FormatUri(owner, name, archiveFormat.ToParameter(), reference);
+        }
+
+        /// <summary>
+        /// Creates the relative <see cref="Uri"/> for getting the contents of the specified repository and path
+        /// </summary>
+        /// <param name="owner">The owner of the repository</param>
+        /// <param name="name">The name of the repository</param>
+        /// <param name="path">The path of the contents to get</param>
+        /// <param name="reference">The name of the commit/branch/tag. Default: the repository’s default branch (usually master)</param>
+        /// <returns>The <see cref="Uri"/> for getting the contents of the specified repository and path</returns>
+        public static Uri RepositoryContent(string owner, string name, string path, string reference)
+        {
+            return "repos/{0}/{1}/contents/{2}?ref={3}".FormatUri(owner, name, path, reference);
         }
     }
 }

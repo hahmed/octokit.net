@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using NSubstitute;
 using Octokit.Internal;
 using Octokit.Reactive;
+using System.Reactive.Threading.Tasks;
 using Octokit.Tests.Helpers;
 using Xunit;
 
@@ -12,9 +13,11 @@ namespace Octokit.Tests.Reactive
 {
     public class ObservablePullRequestReviewCommentsClientTests
     {
-        static ApiInfo CreateApiInfo(IDictionary<string, Uri> links)
+        static IResponse CreateResponseWithApiInfo(IDictionary<string, Uri> links)
         {
-            return new ApiInfo(links, new List<string>(), new List<string>(), "etag", new RateLimit(new Dictionary<string, string>()));
+            var response = Substitute.For<IResponse>();
+            response.ApiInfo.Returns(new ApiInfo(links, new List<string>(), new List<string>(), "etag", new RateLimit(new Dictionary<string, string>())));
+            return response;
         }
 
         public class TheGetForPullRequestMethod
@@ -26,43 +29,42 @@ namespace Octokit.Tests.Reactive
                 var secondPageUrl = new Uri("https://example.com/page/2");
                 var firstPageLinks = new Dictionary<string, Uri> { { "next", secondPageUrl } };
                 var firstPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    CreateResponseWithApiInfo(firstPageLinks),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 1},
-                        new PullRequestReviewComment {Id = 2},
-                        new PullRequestReviewComment {Id = 3}
-                    },
-                    ApiInfo = CreateApiInfo(firstPageLinks)
-                };
+                        new PullRequestReviewComment(1),
+                        new PullRequestReviewComment(2),
+                        new PullRequestReviewComment(3)
+                    });
                 var thirdPageUrl = new Uri("https://example.com/page/3");
                 var secondPageLinks = new Dictionary<string, Uri> { { "next", thirdPageUrl } };
                 var secondPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    CreateResponseWithApiInfo(secondPageLinks),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 4},
-                        new PullRequestReviewComment {Id = 5},
-                        new PullRequestReviewComment {Id = 6}
-                    },
-                    ApiInfo = CreateApiInfo(secondPageLinks)
-                };
+                        new PullRequestReviewComment(4),
+                        new PullRequestReviewComment(5),
+                        new PullRequestReviewComment(6)
+                    }
+                );
                 var lastPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    new Response(),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 7}
-                    },
-                    ApiInfo = CreateApiInfo(new Dictionary<string, Uri>())
-                };
+                        new PullRequestReviewComment(7)
+                    }
+                );
 
                 var gitHubClient = Substitute.For<IGitHubClient>();
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(firstPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => firstPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => firstPageResponse));
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(secondPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => secondPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => secondPageResponse));
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(thirdPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => lastPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => lastPageResponse));
 
                 var client = new ObservablePullRequestReviewCommentsClient(gitHubClient);
 
@@ -80,12 +82,12 @@ namespace Octokit.Tests.Reactive
                 var gitHubClient = Substitute.For<IGitHubClient>();
                 var client = new ObservablePullRequestReviewCommentsClient(gitHubClient);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetAll(null, "name", 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetAll("", "name", 1));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetAll("owner", null, 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetAll("owner", "", 1));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetAll(null, null, 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetAll("", "", 1));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAll(null, "name", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAll("", "name", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAll("owner", null, 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAll("owner", "", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAll(null, null, 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAll("", "", 1).ToTask());
             }
         }
 
@@ -98,36 +100,35 @@ namespace Octokit.Tests.Reactive
                 var secondPageUrl = new Uri("https://example.com/page/2");
                 var firstPageLinks = new Dictionary<string, Uri> { { "next", secondPageUrl } };
                 var firstPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    CreateResponseWithApiInfo(firstPageLinks),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 1},
-                        new PullRequestReviewComment {Id = 2},
-                        new PullRequestReviewComment {Id = 3}
-                    },
-                    ApiInfo = CreateApiInfo(firstPageLinks)
-                };
+                        new PullRequestReviewComment(1),
+                        new PullRequestReviewComment(2),
+                        new PullRequestReviewComment(3)
+                    }
+                );
                 var thirdPageUrl = new Uri("https://example.com/page/3");
                 var secondPageLinks = new Dictionary<string, Uri> { { "next", thirdPageUrl } };
                 var secondPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    CreateResponseWithApiInfo(secondPageLinks),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 4},
-                        new PullRequestReviewComment {Id = 5},
-                        new PullRequestReviewComment {Id = 6}
-                    },
-                    ApiInfo = CreateApiInfo(secondPageLinks)
-                };
+                        new PullRequestReviewComment(4),
+                        new PullRequestReviewComment(5),
+                        new PullRequestReviewComment(6)
+                    });
                 var lastPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    new Response(),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 7},
-                        new PullRequestReviewComment {Id = 8},
-                    },
-                    ApiInfo = CreateApiInfo(new Dictionary<string, Uri>())
-                };
+                        new PullRequestReviewComment(7),
+                        new PullRequestReviewComment(8)
+                    }
+                );
 
                 var gitHubClient = Substitute.For<IGitHubClient>();
 
@@ -136,11 +137,11 @@ namespace Octokit.Tests.Reactive
                         && d["direction"] == "desc"
                         && d["since"] == "2013-11-15T11:43:01Z"
                         && d["sort"] == "updated"), null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => firstPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => firstPageResponse));
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(secondPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => secondPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => secondPageResponse));
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(thirdPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => lastPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => lastPageResponse));
 
                 var client = new ObservablePullRequestReviewCommentsClient(gitHubClient);
 
@@ -151,7 +152,7 @@ namespace Octokit.Tests.Reactive
                     Sort = PullRequestReviewCommentSort.Updated,
                 };
 
-                var results = await client.GetForRepository("fakeOwner", "fakeRepoName", request).ToArray();
+                var results = await client.GetAllForRepository("fakeOwner", "fakeRepoName", request).ToArray();
 
                 Assert.Equal(8, results.Length);
                 gitHubClient.Connection.Received(1).Get<List<PullRequestReviewComment>>(firstPageUrl,
@@ -170,36 +171,35 @@ namespace Octokit.Tests.Reactive
                 var secondPageUrl = new Uri("https://example.com/page/2");
                 var firstPageLinks = new Dictionary<string, Uri> { { "next", secondPageUrl } };
                 var firstPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    CreateResponseWithApiInfo(firstPageLinks),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 1},
-                        new PullRequestReviewComment {Id = 2},
-                        new PullRequestReviewComment {Id = 3}
-                    },
-                    ApiInfo = CreateApiInfo(firstPageLinks)
-                };
+                        new PullRequestReviewComment(1),
+                        new PullRequestReviewComment(2),
+                        new PullRequestReviewComment(3)
+                    }
+                );
                 var thirdPageUrl = new Uri("https://example.com/page/3");
                 var secondPageLinks = new Dictionary<string, Uri> { { "next", thirdPageUrl } };
                 var secondPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    CreateResponseWithApiInfo(secondPageLinks),
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 4},
-                        new PullRequestReviewComment {Id = 5},
-                        new PullRequestReviewComment {Id = 6}
-                    },
-                    ApiInfo = CreateApiInfo(secondPageLinks)
-                };
+                        new PullRequestReviewComment(4),
+                        new PullRequestReviewComment(5),
+                        new PullRequestReviewComment(6)
+                    });
                 var lastPageResponse = new ApiResponse<List<PullRequestReviewComment>>
-                {
-                    BodyAsObject = new List<PullRequestReviewComment>
+                (
+                    new Response(),               
+                    new List<PullRequestReviewComment>
                     {
-                        new PullRequestReviewComment {Id = 7},
-                        new PullRequestReviewComment {Id = 8},
-                    },
-                    ApiInfo = CreateApiInfo(new Dictionary<string, Uri>())
-                };
+                        new PullRequestReviewComment(7),
+                        new PullRequestReviewComment(8)
+                    }
+                );
 
                 var gitHubClient = Substitute.For<IGitHubClient>();
 
@@ -207,15 +207,15 @@ namespace Octokit.Tests.Reactive
                     Arg.Is<Dictionary<string, string>>(d => d.Count == 2
                         && d["direction"] == "asc"
                         && d["sort"] == "created"), null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => firstPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => firstPageResponse));
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(secondPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => secondPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => secondPageResponse));
                 gitHubClient.Connection.Get<List<PullRequestReviewComment>>(thirdPageUrl, null, null)
-                    .Returns(Task.Factory.StartNew<IResponse<List<PullRequestReviewComment>>>(() => lastPageResponse));
+                    .Returns(Task.Factory.StartNew<IApiResponse<List<PullRequestReviewComment>>>(() => lastPageResponse));
 
                 var client = new ObservablePullRequestReviewCommentsClient(gitHubClient);
 
-                var results = await client.GetForRepository("fakeOwner", "fakeRepoName").ToArray();
+                var results = await client.GetAllForRepository("fakeOwner", "fakeRepoName").ToArray();
 
                 Assert.Equal(8, results.Length);
                 gitHubClient.Connection.Received(1).Get<List<PullRequestReviewComment>>(firstPageUrl,
@@ -233,11 +233,11 @@ namespace Octokit.Tests.Reactive
 
                 var request = new PullRequestReviewCommentRequest();
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetForRepository(null, "name", request));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetForRepository("", "name", request));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetForRepository("owner", null, request));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetForRepository("owner", "", request));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetForRepository("owner", "name", null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllForRepository(null, "name", request).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAllForRepository("", "name", request).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllForRepository("owner", null, request).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAllForRepository("owner", "", request).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllForRepository("owner", "name", null).ToTask());
             }
         }
 
@@ -259,12 +259,12 @@ namespace Octokit.Tests.Reactive
             {
                 var client = new ObservablePullRequestReviewCommentsClient(Substitute.For<IGitHubClient>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetComment(null, "name", 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetComment("", "name", 1));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetComment("owner", null, 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetComment("owner", "", 1));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetComment(null, null, 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.GetComment("", "", 1));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetComment(null, "name", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetComment("", "name", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetComment("owner", null, 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetComment("owner", "", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetComment(null, null, 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetComment("", "", 1).ToTask());
             }
         }
 
@@ -296,11 +296,11 @@ namespace Octokit.Tests.Reactive
 
                 var comment = new PullRequestReviewCommentCreate(body, commitId, path, position);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Create(null, "name", 1, comment));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Create("", "name", 1, comment));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Create("owner", null, 1, comment));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Create("owner", "", 1, comment));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Create("owner", "name", 1, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Create(null, "name", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Create("", "name", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Create("owner", null, 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Create("owner", "", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Create("owner", "name", 1, null).ToTask());
             }
         }
 
@@ -330,11 +330,11 @@ namespace Octokit.Tests.Reactive
 
                 var comment = new PullRequestReviewCommentReplyCreate(body, inReplyTo);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.CreateReply(null, "name", 1, comment));
-                await AssertEx.Throws<ArgumentException>(async () => await client.CreateReply("", "name", 1, comment));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.CreateReply("owner", null, 1, comment));
-                await AssertEx.Throws<ArgumentException>(async () => await client.CreateReply("owner", "", 1, comment));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.CreateReply("owner", "name", 1, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.CreateReply(null, "name", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.CreateReply("", "name", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.CreateReply("owner", null, 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.CreateReply("owner", "", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.CreateReply("owner", "name", 1, null).ToTask());
             }
         }
 
@@ -363,11 +363,11 @@ namespace Octokit.Tests.Reactive
 
                 var comment = new PullRequestReviewCommentEdit(body);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Edit(null, "name", 1, comment));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Edit("", "name", 1, comment));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Edit("owner", null, 1, comment));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Edit("owner", "", 1, comment));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Edit("owner", "name", 1, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Edit(null, "name", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Edit("", "name", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Edit("owner", null, 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Edit("owner", "", 1, comment).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Edit("owner", "name", 1, null).ToTask());
             }
         }
 
@@ -390,10 +390,10 @@ namespace Octokit.Tests.Reactive
                 var gitHubClient = Substitute.For<IGitHubClient>();
                 var client = new ObservablePullRequestReviewCommentsClient(gitHubClient);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Delete(null, "name", 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Delete("", "name", 1));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Delete("owner", null, 1));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Delete("owner", "", 1));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Delete(null, "name", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Delete("", "name", 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Delete("owner", null, 1).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Delete("owner", "", 1).ToTask());
             }
         }
     }

@@ -1,11 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Octokit;
-using Octokit.Tests.Helpers;
 using Octokit.Tests.Integration;
 using Xunit;
-using System;
 
 public class TeamsClientTests
 {
@@ -14,11 +13,10 @@ public class TeamsClientTests
         [OrganizationTest]
         public async Task FailsWhenNotAuthenticated()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"));
+            var github = Helper.GetAnonymousClient();
             var newTeam = new NewTeam("Test");
 
-            var e = await AssertEx.Throws<AuthorizationException>(async
-                () => await github.Organization.Team.Create(Helper.Organization, newTeam));
+            var e = await Assert.ThrowsAsync<AuthorizationException>(() => github.Organization.Team.Create(Helper.Organization, newTeam));
 
             Assert.Equal(HttpStatusCode.Unauthorized, e.StatusCode);
         }
@@ -26,24 +24,18 @@ public class TeamsClientTests
         [OrganizationTest(Skip = "see https://github.com/octokit/octokit.net/issues/533 for the resolution to this failing test")]
         public async Task FailsWhenAuthenticatedWithBadCredentials()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-            {
-                Credentials = new Credentials(Helper.Credentials.Login, "bad-password")
-            };
+            var github = Helper.GetBadCredentialsClient();
+
             var newTeam = new NewTeam("Test");
 
-            var e = await AssertEx.Throws<AuthorizationException>(async
-                () => await github.Organization.Team.Create(Helper.Organization, newTeam));
+            var e = await Assert.ThrowsAsync<AuthorizationException>(() => github.Organization.Team.Create(Helper.Organization, newTeam));
             Assert.Equal(HttpStatusCode.Unauthorized, e.StatusCode);
         }
 
         [OrganizationTest]
         public async Task SucceedsWhenAuthenticated()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-            {
-                Credentials = Helper.Credentials
-            };
+            var github = Helper.GetAuthenticatedClient();
 
             var newTeam = new NewTeam(Guid.NewGuid().ToString());
 
@@ -53,67 +45,56 @@ public class TeamsClientTests
         }
     }
 
-    public class TheIsMemberMethod
+    public class TheGetAllForCurrentMethod
+    {
+        [IntegrationTest]
+        public async Task GetsIsMemberWhenAuthenticated()
+        {
+            var github = Helper.GetAuthenticatedClient();
+            var teams = await github.Organization.Team.GetAllForCurrent();
+            Assert.NotEmpty(teams);
+        }
+    }
+
+    public class TheGetMembershipMethod
     {
         readonly Team team;
 
-        public TheIsMemberMethod()
+        public TheGetMembershipMethod()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests")) { Credentials = Helper.Credentials };
+            var github = Helper.GetAuthenticatedClient();
 
             team = github.Organization.Team.GetAll(Helper.Organization).Result.First();
         }
 
-        //TODO: seems like a bug in Github: it's actually returning the membership information!
-        //Maybe because it's a public organization?
-        //[OrganizationTest]
-        public async Task FailsWhenNotAuthenticated()
-        {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"));
-
-            var e = await AssertEx.Throws<AuthorizationException>(async
-                () => await github.Organization.Team.IsMember(team.Id, Helper.UserName));
-
-            Assert.Equal(HttpStatusCode.Unauthorized, e.StatusCode);
-        }
-
-        [OrganizationTest(Skip = "see https://github.com/octokit/octokit.net/issues/533 for the resolution to this failing test")]
+        [OrganizationTest]
         public async Task FailsWhenAuthenticatedWithBadCredentials()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-            {
-                Credentials = new Credentials(Helper.Credentials.Login, "bad-password")
-            };
+            var github = Helper.GetBadCredentialsClient();
 
-            var e = await AssertEx.Throws<AuthorizationException>(async
-                () => await github.Organization.Team.IsMember(team.Id, Helper.UserName));
+            var e = await Assert.ThrowsAsync<AuthorizationException>(
+                () => github.Organization.Team.GetMembership(team.Id, Helper.UserName));
             Assert.Equal(HttpStatusCode.Unauthorized, e.StatusCode);
         }
 
         [OrganizationTest]
         public async Task GetsIsMemberWhenAuthenticated()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-            {
-                Credentials = Helper.Credentials
-            };
+            var github = Helper.GetAuthenticatedClient();
 
-            var isMember = await github.Organization.Team.IsMember(team.Id, Helper.UserName);
+            var membership = await github.Organization.Team.GetMembership(team.Id, Helper.UserName);
 
-            Assert.True(isMember);
+            Assert.Equal(TeamMembership.Active, membership);
         }
 
         [OrganizationTest]
         public async Task GetsIsMemberFalseForNonMemberWhenAuthenticated()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-            {
-                Credentials = Helper.Credentials
-            };
+            var github = Helper.GetAuthenticatedClient();
 
-            var isMember = await github.Organization.Team.IsMember(team.Id, "foo");
+            var membership = await github.Organization.Team.GetMembership(team.Id, "foo");
 
-            Assert.False(isMember);
+            Assert.Equal(TeamMembership.NotFound, membership);
         }
     }
 
@@ -123,7 +104,7 @@ public class TeamsClientTests
 
         public TheGetMembersMethod()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests")) { Credentials = Helper.Credentials };
+            var github = Helper.GetAuthenticatedClient();
 
             team = github.Organization.Team.GetAll(Helper.Organization).Result.First();
         }
@@ -131,12 +112,9 @@ public class TeamsClientTests
         [OrganizationTest]
         public async Task GetsAllMembersWhenAuthenticated()
         {
-            var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-            {
-                Credentials = Helper.Credentials
-            };
+            var github = Helper.GetAuthenticatedClient();
 
-            var members = await github.Organization.Team.GetMembers(team.Id);
+            var members = await github.Organization.Team.GetAllMembers(team.Id);
 
             Assert.Contains(Helper.UserName, members.Select(u => u.Login));
         }

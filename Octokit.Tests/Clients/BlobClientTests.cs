@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using NSubstitute;
 using Octokit.Internal;
@@ -28,12 +30,12 @@ namespace Octokit.Tests.Clients
             {
                 var client = new BlobsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get(null, "name", "123456ABCD"));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Get("", "name", "123456ABCD"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", null, "123456ABCD"));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Get("owner", "", "123456ABCD"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", "name", null));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Get("owner", "name", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get(null, "name", "123456ABCD"));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Get("", "name", "123456ABCD"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", null, "123456ABCD"));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Get("owner", "", "123456ABCD"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", "name", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Get("owner", "name", ""));
             }
         }
 
@@ -57,11 +59,11 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new BlobsClient(connection);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Create(null, "name", new NewBlob()));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Create("", "name", new NewBlob()));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Create("owner", null, new NewBlob()));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Create("owner", "", new NewBlob()));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Create("owner", "name", null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Create(null, "name", new NewBlob()));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Create("", "name", new NewBlob()));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Create("owner", null, new NewBlob()));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Create("owner", "", new NewBlob()));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Create("owner", "name", null));
             }
         }
 
@@ -74,19 +76,19 @@ namespace Octokit.Tests.Clients
                 "\"sha\": \"3a0f86fb8db8eea7ccbb9a95f325ddbedfb25e15\"," +
                 "\"size\": 100" +
                 "}";
-            var response = new ApiResponse<Blob>
-            {
-                Body = blobResponseJson,
-                ContentType = "application/json"
-            };
+            var httpResponse = new Response(
+                HttpStatusCode.OK,
+                blobResponseJson,
+                new Dictionary<string, string>(),
+                "application/json");
             var jsonPipeline = new JsonHttpPipeline();
 
-            jsonPipeline.DeserializeResponse(response);
+            var response = jsonPipeline.DeserializeResponse<Blob>(httpResponse);
 
-            Assert.NotNull(response.BodyAsObject);
-            Assert.Equal(blobResponseJson, response.Body);
-            Assert.Equal(100, response.BodyAsObject.Size);
-            Assert.Equal(EncodingType.Utf8, response.BodyAsObject.Encoding);
+            Assert.NotNull(response.Body);
+            Assert.Equal(blobResponseJson, (string)response.HttpResponse.Body);
+            Assert.Equal(100, response.Body.Size);
+            Assert.Equal(EncodingType.Utf8, response.Body.Encoding);
         }
     }
 }

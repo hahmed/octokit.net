@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Octokit
@@ -28,21 +30,38 @@ namespace Octokit
 
         public static string UriEncode(this string input)
         {
-            return System.Net.WebUtility.UrlEncode(input);
+            return WebUtility.UrlEncode(input);
+        }
+
+        public static string ToBase64String(this string input)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(input));
+        }
+
+        public static string FromBase64String(this string encoded)
+        {
+            var decodedBytes = Convert.FromBase64String(encoded);
+            return Encoding.UTF8.GetString(decodedBytes, 0, decodedBytes.Length);
         }
 
         static readonly Regex _optionalQueryStringRegex = new Regex("\\{\\?([^}]+)\\}");
         public static Uri ExpandUriTemplate(this string template, object values)
         {
             var optionalQueryStringMatch = _optionalQueryStringRegex.Match(template);
-            if(optionalQueryStringMatch.Success)
+            if (optionalQueryStringMatch.Success)
             {
-                var expansion = "";
-                var parameterName = optionalQueryStringMatch.Groups[1].Value;
-                var parameterProperty = values.GetType().GetProperty(parameterName);
-                if(parameterProperty != null)
+                var expansion = string.Empty;
+                var parameters = optionalQueryStringMatch.Groups[1].Value.Split(new char[] { ',' });
+
+                foreach (var parameter in parameters)
                 {
-                    expansion = "?" + parameterName + "=" + Uri.EscapeDataString("" + parameterProperty.GetValue(values, new object[0]));
+                    var parameterProperty = values.GetType().GetProperty(parameter);
+                    if (parameterProperty != null)
+                    {
+                        expansion += string.IsNullOrWhiteSpace(expansion) ? "?" : "&";
+                        expansion += parameter + "=" +
+                            Uri.EscapeDataString("" + parameterProperty.GetValue(values, new object[0]));
+                    }
                 }
                 template = _optionalQueryStringRegex.Replace(template, expansion);
             }
@@ -87,6 +106,20 @@ namespace Octokit
 
             //We need to have the last word.
             yield return new String(letters, wordStartIndex, letters.Length - wordStartIndex);
+        }
+
+        // the rule:
+        // Username may only contain alphanumeric characters or single hyphens
+        // and cannot begin or end with a hyphen
+        static readonly Regex nameWithOwner = new Regex("[a-z0-9.-]{1,}/[a-z0-9.-]{1,}", 
+#if (!PORTABLE && !NETFX_CORE)
+            RegexOptions.Compiled | 
+#endif
+            RegexOptions.IgnoreCase);
+
+        internal static bool IsNameWithOwnerFormat(this string input)
+        {
+            return nameWithOwner.IsMatch(input);
         }
     }
 }

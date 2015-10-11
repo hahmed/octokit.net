@@ -2,6 +2,9 @@
 
 namespace Octokit
 {
+    /// <summary>
+    /// Used to requent and filter a list of repository issues.
+    /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class RepositoryIssueRequest : IssueRequest
     {
@@ -22,9 +25,6 @@ namespace Octokit
         /// <summary>
         /// The user that created the issue
         /// </summary>
-        /// <remarks>
-        /// Specify "none" for issues with no assigned user
-        /// </remarks>
         public string Creator { get; set; }
 
         /// <summary>

@@ -14,7 +14,7 @@ public class HttpClientAdapterTests
         [IntegrationTest]
         public async Task CanDownloadImage()
         {
-            var httpClient = new HttpClientAdapter();
+            var httpClient = new HttpClientAdapter(HttpMessageHandlerFactory.CreateDefault);
             var request = new Request
             {
                 BaseAddress = new Uri("https://github.global.ssl.fastly.net/", UriKind.Absolute),
@@ -23,13 +23,34 @@ public class HttpClientAdapterTests
                 Method = HttpMethod.Get
             };
 
-            var imageBytes = await httpClient.Send<byte[]>(request, CancellationToken.None);
+            var response = await httpClient.Send(request, CancellationToken.None);
 
             // Spot check some of dem bytes.
-            Assert.Equal(137, imageBytes.BodyAsObject[0]);
-            Assert.Equal(80, imageBytes.BodyAsObject[1]);
-            Assert.Equal(78, imageBytes.BodyAsObject[2]);
-            Assert.Equal(130, imageBytes.BodyAsObject.Last());
+            var imageBytes = (byte[])response.Body;
+            Assert.Equal(137, imageBytes[0]);
+            Assert.Equal(80, imageBytes[1]);
+            Assert.Equal(78, imageBytes[2]);
+            Assert.Equal(130, imageBytes.Last());
+        }
+
+        [IntegrationTest]
+        public async Task CanCancelARequest()
+        {
+            var httpClient = new HttpClientAdapter(HttpMessageHandlerFactory.CreateDefault);
+            var request = new Request
+            {
+                BaseAddress = new Uri("https://github.global.ssl.fastly.net/", UriKind.Absolute),
+                Endpoint = new Uri("/images/icons/emoji/poop.png?v=5", UriKind.RelativeOrAbsolute),
+                AllowAutoRedirect = true,
+                Method = HttpMethod.Get,
+                Timeout = TimeSpan.FromMilliseconds(10)
+            };
+
+            var response = httpClient.Send(request, CancellationToken.None);
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
+
+            Assert.True(response.IsCanceled);
         }
     }
 }

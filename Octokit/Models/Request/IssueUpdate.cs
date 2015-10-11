@@ -1,21 +1,19 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using Octokit.Internal;
 
 namespace Octokit
 {
+    /// <summary>
+    /// Specifies the values used to update an issue.
+    /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class IssueUpdate
     {
-        public IssueUpdate()
-        {
-            Labels = new Collection<string>();
-        }
-
         /// <summary>
-        /// Title of the milestone (required)
+        /// Title of the issue (required)
         /// </summary>
         public string Title { get; set; }
 
@@ -49,18 +47,49 @@ namespace Octokit
         /// <remarks>
         /// Only users with push access can set labels for new issues. Labels are silently dropped otherwise.
         /// </remarks>
-        public Collection<string> Labels { get; private set; }
+        public ICollection<string> Labels { get; private set; }
 
         /// <summary>
         /// Whether the issue is open or closed.
         /// </summary>
-        public ItemState State { get; set; }
+        public ItemState? State { get; set; }
 
         internal string DebuggerDisplay
         {
             get
             {
                 return String.Format(CultureInfo.InvariantCulture, "Title: {0}",Title);
+            }
+        }
+
+        /// <summary>
+        /// Adds the specified label to the issue.
+        /// </summary>
+        /// <param name="name">The name of the label.</param>
+        public void AddLabel(string name)
+        {
+            // lazily create the label array
+            if (Labels == null)
+            {
+                Labels = new List<string>();
+            }
+
+            Labels.Add(name);
+        }
+
+        /// <summary>
+        /// Clears all the labels.
+        /// </summary>
+        public void ClearLabels()
+        {
+            // lazily create the label array
+            if (Labels == null)
+            {
+                Labels = new List<string>();
+            }
+            else
+            {
+                Labels.Clear();
             }
         }
     }

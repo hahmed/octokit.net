@@ -1,4 +1,7 @@
-# Octokit - GitHub API Client Library for .NET
+# Octokit - GitHub API Client Library for .NET [![Build Status](https://ci.appveyor.com/api/projects/status/github/octokit/octokit.net?branch=master)](https://ci.appveyor.com/project/Haacked15676/octokit-net)
+
+![logo](octokit-dotnet_2.png)
+
 
 Octokit is a client library targeting .NET 4.5 and above that provides an easy
 way to interact with the [GitHub API](http://developer.github.com/v3/).
@@ -27,8 +30,17 @@ Octokit is available on NuGet.
 ```
 Install-Package Octokit
 ```
+or an IObservable based GitHub API client library for .NET using Reactive Extensions
+
+```
+Install-Package Octokit.Reactive
+```
 
 In Xamarin Studio you can find this option under the project's context menu: **Add | Add Packages...***.
+
+## Documentation
+
+Please see https://github.com/octokit/octokit.net/blob/master/docs/index.md for more detailed documentation.
 
 ## Build
 
@@ -54,7 +66,7 @@ for more details.
 
 ## Build Server
 
-The builds and tests for Octokit.net are run on [qed](https://github.com/half-ogre/qed/). This enables us to build and test incoming pull requests: http://half-ogre-qed.cloudapp.net/octokit/octokit.net
+The builds and tests for Octokit.net are run on [AppVeyor](http://www.appveyor.com). This enables us to build and test incoming pull requests: https://ci.appveyor.com/project/Haacked15676/octokit-net
 
 ## Problems?
 
@@ -75,6 +87,9 @@ When creating an issue, clearly explain
 Also include any other information you think is relevant to reproduce the 
 problem.
 
+## Related Projects
+
+ - [ScriptCs.OctoKit](https://github.com/alfhenrik/ScriptCs.OctoKit) - a script pack to use Octokit in scriptcs 
 
 ## Copyright and License
 

@@ -5,24 +5,21 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Octokit.Tests.Integration;
 using Xunit;
+using Octokit.Tests.Integration.Helpers;
 
 public class ObservableIssuesClientTests : IDisposable
 {
-    readonly ObservableIssuesClient _client;
-    readonly string _repoName;
-    readonly Repository _createdRepository;
+    private readonly RepositoryContext _context;
+    private readonly ObservableIssuesClient _client;
 
     public ObservableIssuesClientTests()
     {
-        var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-        {
-            Credentials = Helper.Credentials
-        };
+        var github = Helper.GetAuthenticatedClient();
 
         _client = new ObservableIssuesClient(github);
-        _repoName = Helper.MakeNameWithTimestamp("public-repo");
-        var result = github.Repository.Create(new NewRepository { Name = _repoName }).Result;
-        _createdRepository = result;
+
+        var repoName = Helper.MakeNameWithTimestamp("public-repo");
+        _context = github.CreateRepositoryContext(new NewRepository(repoName)).Result;
     }
 
     [IntegrationTest]
@@ -38,7 +35,7 @@ public class ObservableIssuesClientTests : IDisposable
     [IntegrationTest]
     public async Task ReturnsAllIssuesForARepository()
     {
-        var issues = await _client.GetForRepository("libgit2", "libgit2sharp").ToList();
+        var issues = await _client.GetAllForRepository("libgit2", "libgit2sharp").ToList();
 
         Assert.NotEmpty(issues);
     }
@@ -46,8 +43,8 @@ public class ObservableIssuesClientTests : IDisposable
     [IntegrationTest]
     public async Task ReturnsAllIssuesForCurrentUser()
     {
-        var newIssue = new NewIssue("Integration test issue") { Assignee = _createdRepository.Owner.Login };
-        await _client.Create(_createdRepository.Owner.Login, _repoName, newIssue);
+        var newIssue = new NewIssue("Integration test issue") { Assignee = _context.RepositoryOwner };
+        await _client.Create(_context.RepositoryOwner, _context.RepositoryName, newIssue);
 
         var issues = await _client.GetAllForCurrent().ToList();
 
@@ -57,8 +54,8 @@ public class ObservableIssuesClientTests : IDisposable
     [IntegrationTest]
     public async Task ReturnsAllIssuesForOwnedAndMemberRepositories()
     {
-        var newIssue = new NewIssue("Integration test issue") { Assignee = _createdRepository.Owner.Login };
-        await _client.Create(_createdRepository.Owner.Login, _repoName, newIssue);
+        var newIssue = new NewIssue("Integration test issue") { Assignee = _context.RepositoryOwner };
+        await _client.Create(_context.RepositoryOwner, _context.RepositoryName, newIssue);
         var result = await _client.GetAllForOwnedAndMemberRepositories().ToList();
 
         Assert.NotEmpty(result);
@@ -69,15 +66,15 @@ public class ObservableIssuesClientTests : IDisposable
     {
         var newIssue = new NewIssue("Integration test issue");
 
-        var createResult = await _client.Create(_createdRepository.Owner.Login, _repoName, newIssue);
-        var updateResult = await _client.Update(_createdRepository.Owner.Login, _repoName, createResult.Number, new IssueUpdate { Title = "Modified integration test issue" });
+        var createResult = await _client.Create(_context.RepositoryOwner, _context.RepositoryName, newIssue);
+        var updateResult = await _client.Update(_context.RepositoryOwner, _context.RepositoryName, createResult.Number, new IssueUpdate { Title = "Modified integration test issue" });
 
         Assert.Equal("Modified integration test issue", updateResult.Title);
     }
 
     public void Dispose()
     {
-        Helper.DeleteRepo(_createdRepository);
+        _context.Dispose();
     }
 }
 

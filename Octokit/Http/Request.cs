@@ -4,13 +4,13 @@ using System.Net.Http;
 
 namespace Octokit.Internal
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
     public class Request : IRequest
     {
         public Request()
         {
             Headers = new Dictionary<string, string>();
             Parameters = new Dictionary<string, string>();
-            AllowAutoRedirect = true;
             Timeout = TimeSpan.FromSeconds(100);
         }
 
@@ -22,6 +22,8 @@ namespace Octokit.Internal
         public Uri Endpoint { get; set; }
         public TimeSpan Timeout { get; set; }
         public string ContentType { get; set; }
+
+        [Obsolete("This value is no longer respected due to the necessary redirect work")]
         public bool AllowAutoRedirect { get; set; }
     }
 }

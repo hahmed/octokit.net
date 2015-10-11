@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using Octokit.Internal;
-using Octokit.Tests.Helpers;
 using Xunit;
 
 namespace Octokit.Tests.Http
@@ -19,14 +18,14 @@ namespace Octokit.Tests.Http
             public async Task MakesGetRequestForItem()
             {
                 var getUri = new Uri("anything", UriKind.Relative);
-                IResponse<object> response = new ApiResponse<object> {BodyAsObject = new object()};
+                IApiResponse<object> response = new ApiResponse<object>(new Response());
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Args.Uri, null, null).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Get<object>(getUri);
 
-                Assert.Same(response.BodyAsObject, data);
+                Assert.Same(response.Body, data);
                 connection.Received().GetResponse<object>(getUri);
             }
 
@@ -34,15 +33,15 @@ namespace Octokit.Tests.Http
             public async Task MakesGetRequestForItemWithAcceptsOverride()
             {
                 var getUri = new Uri("anything", UriKind.Relative);
-                var accepts = "custom/accepts";
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = new object() };
+                const string accepts = "custom/accepts";
+                IApiResponse<object> response = new ApiResponse<object>(new Response());
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Args.Uri, null, Args.String).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Get<object>(getUri, null, accepts);
 
-                Assert.Same(response.BodyAsObject, data);
+                Assert.Same(response.Body, data);
                 connection.Received().Get<object>(getUri, null, accepts);
             }
 
@@ -51,8 +50,8 @@ namespace Octokit.Tests.Http
             {
                 var getUri = new Uri("anything", UriKind.Relative);
                 var client = new ApiConnection(Substitute.For<IConnection>());
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get<object>(null));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get<object>(getUri, new Dictionary<string, string>(), null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get<object>(null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get<object>(getUri, new Dictionary<string, string>(), null));
             }
         }
 
@@ -62,14 +61,14 @@ namespace Octokit.Tests.Http
             public async Task MakesHtmlRequest()
             {
                 var getUri = new Uri("anything", UriKind.Relative);
-                IResponse<string> response = new ApiResponse<string> {Body = "<html />"};
+                IApiResponse<string> response = new ApiResponse<string>(new Response(), "<html />");
                 var connection = Substitute.For<IConnection>();
                 connection.GetHtml(Args.Uri, null).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.GetHtml(getUri);
 
-                Assert.Same("<html />", data);
+                Assert.Equal("<html />", data);
                 connection.Received().GetHtml(getUri);
             }
 
@@ -77,7 +76,7 @@ namespace Octokit.Tests.Http
             public async Task EnsuresArgumentNotNull()
             {
                 var client = new ApiConnection(Substitute.For<IConnection>());
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetHtml(null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetHtml(null));
             }
         }
 
@@ -87,13 +86,9 @@ namespace Octokit.Tests.Http
             public async Task MakesGetRequestForAllItems()
             {
                 var getAllUri = new Uri("anything", UriKind.Relative);
-                var links = new Dictionary<string, Uri>();
-                var scopes = new List<string>();
-                IResponse<List<object>> response = new ApiResponse<List<object>>
-                {
-                    ApiInfo = new ApiInfo(links, scopes, scopes, "etag", new RateLimit(new Dictionary<string, string>())),
-                    BodyAsObject = new List<object> {new object(), new object()}
-                };
+                IApiResponse<List<object>> response = new ApiResponse<List<object>>(
+                    new Response(),
+                    new List<object> { new object(), new object() });
                 var connection = Substitute.For<IConnection>();
                 connection.Get<List<object>>(Args.Uri, null, null).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
@@ -110,14 +105,14 @@ namespace Octokit.Tests.Http
                 var client = new ApiConnection(Substitute.For<IConnection>());
                 
                 // One argument
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetAll<object>(null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAll<object>(null));
                 
                 // Two argument
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await client.GetAll<object>(null, new Dictionary<string, string>()));
 
                 // Three arguments
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await client.GetAll<object>(null, new Dictionary<string, string>(), "accepts"));
             }
         }
@@ -129,14 +124,14 @@ namespace Octokit.Tests.Http
             {
                 var patchUri = new Uri("anything", UriKind.Relative);
                 var sentData = new object();
-                IResponse<object> response = new ApiResponse<object> {BodyAsObject = new object()};
+                IApiResponse<object> response = new ApiResponse<object>(new Response(), new object());
                 var connection = Substitute.For<IConnection>();
                 connection.Patch<object>(Args.Uri, Args.Object).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Patch<object>(patchUri, sentData);
 
-                Assert.Same(data, response.BodyAsObject);
+                Assert.Same(data, response.Body);
                 connection.Received().Patch<object>(patchUri, sentData);
             }
 
@@ -146,14 +141,14 @@ namespace Octokit.Tests.Http
                 var patchUri = new Uri("anything", UriKind.Relative);
                 var sentData = new object();
                 var accepts = "custom/accepts";
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = new object() };
+                IApiResponse<object> response = new ApiResponse<object>(new Response());
                 var connection = Substitute.For<IConnection>();
                 connection.Patch<object>(Args.Uri, Args.Object, Args.String).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Patch<object>(patchUri, sentData, accepts);
 
-                Assert.Same(data, response.BodyAsObject);
+                Assert.Same(data, response.Body);
                 connection.Received().Patch<object>(patchUri, sentData, accepts);
             }
 
@@ -162,27 +157,41 @@ namespace Octokit.Tests.Http
             {
                 var connection = new ApiConnection(Substitute.For<IConnection>());
                 var patchUri = new Uri("", UriKind.Relative);
-                await AssertEx.Throws<ArgumentNullException>(async () => await connection.Patch<object>(null, new object()));
-                await AssertEx.Throws<ArgumentNullException>(async () => await connection.Patch<object>(patchUri, null));
-                await AssertEx.Throws<ArgumentNullException>(async () => await connection.Patch<object>(patchUri, new object(), null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Patch<object>(null, new object()));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Patch<object>(patchUri, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Patch<object>(patchUri, new object(), null));
             }
         }
 
         public class ThePostMethod
         {
             [Fact]
+            public async Task MakesPostRequestWithoutData()
+            {
+                var postUri = new Uri("anything", UriKind.Relative);
+                var statusCode = HttpStatusCode.Accepted;
+                var connection = Substitute.For<IConnection>();
+                connection.Post(Args.Uri).Returns(Task.FromResult(statusCode));
+                var apiConnection = new ApiConnection(connection);
+
+                await apiConnection.Post(postUri);
+
+                connection.Received().Post(postUri);
+            }
+
+            [Fact]
             public async Task MakesPostRequestWithSuppliedData()
             {
                 var postUri = new Uri("anything", UriKind.Relative);
                 var sentData = new object();
-                IResponse<object> response = new ApiResponse<object> {BodyAsObject = new object()};
+                IApiResponse<object> response = new ApiResponse<object>(new Response(), new object());
                 var connection = Substitute.For<IConnection>();
                 connection.Post<object>(Args.Uri, Args.Object, null, null).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Post<object>(postUri, sentData);
 
-                Assert.Same(data, response.BodyAsObject);
+                Assert.Same(data, response.Body);
                 connection.Received().Post<object>(postUri, sentData, null, null);
             }
 
@@ -190,7 +199,7 @@ namespace Octokit.Tests.Http
             public async Task MakesUploadRequest()
             {
                 var uploadUrl = new Uri("anything", UriKind.Relative);
-                IResponse<string> response = new ApiResponse<string> {BodyAsObject = "the response"};
+                IApiResponse<string> response = new ApiResponse<string>(new Response(), "the response");
                 var connection = Substitute.For<IConnection>();
                 connection.Post<string>(Args.Uri, Arg.Any<Stream>(), Args.String, Args.String)
                     .Returns(Task.FromResult(response));
@@ -208,17 +217,16 @@ namespace Octokit.Tests.Http
                 var postUri = new Uri("", UriKind.Relative);
                 var connection = new ApiConnection(Substitute.For<IConnection>());
 
+                // 1 parameter overload
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Post(null));
+
                 // 2 parameter overload
-                await AssertEx.Throws<ArgumentNullException>(async () =>
-                    await connection.Post<object>(null, new object()));
-                await AssertEx.Throws<ArgumentNullException>(async () =>
-                    await connection.Post<object>(postUri, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Post<object>(null, new object()));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Post<object>(postUri, null));
 
                 // 3 parameters
-                await AssertEx.Throws<ArgumentNullException>(async () =>
-                    await connection.Post<object>(null, new MemoryStream(), "anAccept", "some-content-type"));
-                await AssertEx.Throws<ArgumentNullException>(async () =>
-                    await connection.Post<object>(postUri, null, "anAccept", "some-content-type"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Post<object>(null, new MemoryStream(), "anAccept", "some-content-type"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Post<object>(postUri, null, "anAccept", "some-content-type"));
             }
         }
 
@@ -229,14 +237,14 @@ namespace Octokit.Tests.Http
             {
                 var putUri = new Uri("anything", UriKind.Relative);
                 var sentData = new object();
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = new object() };
+                IApiResponse<object> response = new ApiResponse<object>(new Response());
                 var connection = Substitute.For<IConnection>();
                 connection.Put<object>(Args.Uri, Args.Object).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Put<object>(putUri, sentData);
 
-                Assert.Same(data, response.BodyAsObject);
+                Assert.Same(data, response.Body);
                 connection.Received().Put<object>(putUri, sentData);
             }
 
@@ -245,14 +253,14 @@ namespace Octokit.Tests.Http
             {
                 var putUri = new Uri("anything", UriKind.Relative);
                 var sentData = new object();
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = new object() };
+                IApiResponse<object> response = new ApiResponse<object>(new Response());
                 var connection = Substitute.For<IConnection>();
                 connection.Put<object>(Args.Uri, Args.Object, "two-factor").Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var data = await apiConnection.Put<object>(putUri, sentData, "two-factor");
 
-                Assert.Same(data, response.BodyAsObject);
+                Assert.Same(data, response.Body);
                 connection.Received().Put<object>(putUri, sentData, "two-factor");
             }
 
@@ -263,19 +271,19 @@ namespace Octokit.Tests.Http
                 var connection = new ApiConnection(Substitute.For<IConnection>());
 
                 // 2 parameter overload
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await connection.Put<object>(null, new object()));
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await connection.Put<object>(putUri, null));
 
                 // 3 parameters
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await connection.Put<object>(null, new MemoryStream(), "two-factor"));
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await connection.Put<object>(putUri, null, "two-factor"));
-                await AssertEx.Throws<ArgumentNullException>(async () =>
+                await Assert.ThrowsAsync<ArgumentNullException>(async () =>
                     await connection.Put<object>(putUri, new MemoryStream(), null));
-                await AssertEx.Throws<ArgumentException>(async () =>
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
                     await connection.Put<object>(putUri, new MemoryStream(), ""));
             }
         }
@@ -300,40 +308,24 @@ namespace Octokit.Tests.Http
             public async Task EnsuresArgumentNotNull()
             {
                 var connection = new ApiConnection(Substitute.For<IConnection>());
-                await AssertEx.Throws<ArgumentNullException>(async () => await connection.Delete(null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.Delete(null));
             }
         }
 
         public class TheGetQueuedOperationMethod
         {
             [Fact]
-            public async Task MakesGetRequest()
-            {
-                var queuedOperationUrl = new Uri("anything", UriKind.Relative);
-
-                const HttpStatusCode statusCode = HttpStatusCode.OK;
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = new object(), StatusCode = statusCode };
-                var connection = Substitute.For<IConnection>();
-                connection.GetResponse<object>(queuedOperationUrl,Args.CancellationToken).Returns(Task.FromResult(response));
-                var apiConnection = new ApiConnection(connection);
-
-                await apiConnection.GetQueuedOperation<object>(queuedOperationUrl,CancellationToken.None);
-
-                connection.Received().GetResponse<object>(queuedOperationUrl, Args.CancellationToken);
-            }
-
-            [Fact]
             public async Task WhenGetReturnsNotOkOrAcceptedApiExceptionIsThrown()
             {
                 var queuedOperationUrl = new Uri("anything", UriKind.Relative);
 
                 const HttpStatusCode statusCode = HttpStatusCode.PartialContent;
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = new object(), StatusCode = statusCode };
+                IApiResponse<object> response = new ApiResponse<object>(new Response(statusCode, null, new Dictionary<string, string>(), "application/json"), new object());
                 var connection = Substitute.For<IConnection>();
                 connection.GetResponse<object>(queuedOperationUrl, Args.CancellationToken).Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
-                await AssertEx.Throws<ApiException>(async () => await apiConnection.GetQueuedOperation<object>(queuedOperationUrl, Args.CancellationToken));
+                await Assert.ThrowsAsync<ApiException>(() => apiConnection.GetQueuedOperation<object>(queuedOperationUrl, Args.CancellationToken));
             }
 
             [Fact]
@@ -341,15 +333,36 @@ namespace Octokit.Tests.Http
             {
                 var queuedOperationUrl = new Uri("anything", UriKind.Relative);
 
-                var result = new object();
+                var result = new[] { new object() };
                 const HttpStatusCode statusCode = HttpStatusCode.OK;
-                IResponse<object> response = new ApiResponse<object> { BodyAsObject = result, StatusCode = statusCode };
+                var httpResponse = new Response(statusCode, null, new Dictionary<string, string>(), "application/json");
+                IApiResponse<IReadOnlyList<object>> response = new ApiResponse<IReadOnlyList<object>>(httpResponse, result);
                 var connection = Substitute.For<IConnection>();
-                connection.GetResponse<object>(queuedOperationUrl, Args.CancellationToken).Returns(Task.FromResult(response));
+                connection.GetResponse<IReadOnlyList<object>>(queuedOperationUrl, Args.CancellationToken)
+                    .Returns(Task.FromResult(response));
                 var apiConnection = new ApiConnection(connection);
 
                 var actualResult = await apiConnection.GetQueuedOperation<object>(queuedOperationUrl, Args.CancellationToken);
-                Assert.Same(actualResult,result);
+                Assert.Same(actualResult, result);
+            }
+
+            [Fact]
+            public async Task WhenGetReturnsNoContentThenReturnsEmptyCollection()
+            {
+                var queuedOperationUrl = new Uri("anything", UriKind.Relative);
+
+                var result = new [] { new object() };
+                const HttpStatusCode statusCode = HttpStatusCode.NoContent;
+                var httpResponse = new Response(statusCode, null, new Dictionary<string, string>(), "application/json");
+                IApiResponse<IReadOnlyList<object>> response = new ApiResponse<IReadOnlyList<object>>(
+                    httpResponse, result);
+                var connection = Substitute.For<IConnection>();
+                connection.GetResponse<IReadOnlyList<object>>(queuedOperationUrl, Args.CancellationToken)
+                    .Returns(Task.FromResult(response));
+                var apiConnection = new ApiConnection(connection);
+
+                var actualResult = await apiConnection.GetQueuedOperation<object>(queuedOperationUrl, Args.CancellationToken);
+                Assert.Empty(actualResult);
             }
 
             [Fact]
@@ -357,11 +370,13 @@ namespace Octokit.Tests.Http
             {
                 var queuedOperationUrl = new Uri("anything", UriKind.Relative);
 
-                var result = new object();
-                IResponse<object> firstResponse = new ApiResponse<object> { BodyAsObject = result, StatusCode = HttpStatusCode.Accepted };
-                IResponse<object> completedResponse = new ApiResponse<object> { BodyAsObject = result, StatusCode = HttpStatusCode.OK };
+                var result = new [] { new object() };
+                IApiResponse<IReadOnlyList<object>> firstResponse = new ApiResponse<IReadOnlyList<object>>(
+                    new Response(HttpStatusCode.Accepted, null, new Dictionary<string, string>(), "application/json"), result);
+                IApiResponse<IReadOnlyList<object>> completedResponse = new ApiResponse<IReadOnlyList<object>>(
+                    new Response(HttpStatusCode.OK, null, new Dictionary<string, string>(), "application/json"), result);
                 var connection = Substitute.For<IConnection>();
-                connection.GetResponse<object>(queuedOperationUrl, Args.CancellationToken)
+                connection.GetResponse<IReadOnlyList<object>>(queuedOperationUrl, Args.CancellationToken)
                           .Returns(x => Task.FromResult(firstResponse),
                           x => Task.FromResult(firstResponse), 
                           x => Task.FromResult(completedResponse));
@@ -370,17 +385,19 @@ namespace Octokit.Tests.Http
 
                 await apiConnection.GetQueuedOperation<object>(queuedOperationUrl, CancellationToken.None);
 
-                connection.Received(3).GetResponse<object>(queuedOperationUrl, Args.CancellationToken);
+                connection.Received(3).GetResponse<IReadOnlyList<object>>(queuedOperationUrl, Args.CancellationToken);
             }
 
             public async Task CanCancelQueuedOperation()
             {
                 var queuedOperationUrl = new Uri("anything", UriKind.Relative);
 
-                var result = new object();
-                IResponse<object> accepted = new ApiResponse<object> { BodyAsObject = result, StatusCode = HttpStatusCode.Accepted };
+                var result = new [] { new object() };
+                IApiResponse<IReadOnlyList<object>> accepted = new ApiResponse<IReadOnlyList<object>>(
+                    new Response(HttpStatusCode.Accepted, null, new Dictionary<string, string>(), "application/json"), result);
                 var connection = Substitute.For<IConnection>();
-                connection.GetResponse<object>(queuedOperationUrl, Args.CancellationToken).Returns(x => Task.FromResult(accepted));
+                connection.GetResponse<IReadOnlyList<object>>(queuedOperationUrl, Args.CancellationToken)
+                    .Returns(x => Task.FromResult(accepted));
 
                 var apiConnection = new ApiConnection(connection);
 
@@ -404,7 +421,7 @@ namespace Octokit.Tests.Http
             public async Task EnsuresArgumentNotNull()
             {
                 var connection = new ApiConnection(Substitute.For<IConnection>());
-                await AssertEx.Throws<ArgumentNullException>(async () => await connection.GetQueuedOperation<object>(null, CancellationToken.None));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => connection.GetQueuedOperation<object>(null, CancellationToken.None));
             }
         }
 

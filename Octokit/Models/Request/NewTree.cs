@@ -2,11 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Octokit
 {
+    /// <summary>
+    /// Used to create a new Tree.
+    /// </summary>
+    /// <remarks>
+    /// The tree creation API will take nested entries as well. If both a tree and a nested path modifying that tree 
+    /// are specified, it will overwrite the contents of that tree with the new path contents and write a new tree out.
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class NewTree
     {
@@ -23,8 +29,7 @@ namespace Octokit
         /// <summary>
         /// The list of Tree Items for this new Tree item.
         /// </summary>
-        [SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public ICollection<NewTreeItem> Tree { get; set; }
+        public ICollection<NewTreeItem> Tree { get; private set; }
 
         internal string DebuggerDisplay
         {

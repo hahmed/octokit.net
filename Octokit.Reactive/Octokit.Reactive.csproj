@@ -11,7 +11,7 @@
     <AssemblyName>Octokit.Reactive</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,6 +38,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisRuleSet>..\Octokit.ruleset</CodeAnalysisRuleSet>
+    <DocumentationFile>bin\Release\Net45\Octokit.Reactive.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -73,14 +74,19 @@
     <Compile Include="..\SolutionInfo.cs">
       <Link>Properties\SolutionInfo.cs</Link>
     </Compile>
+    <Compile Include="Clients\IObservableMergingClient.cs" />
     <Compile Include="Clients\IObservableOauthClient.cs" />
     <Compile Include="Clients\IObservableRepositoryCommitsClients.cs" />
     <Compile Include="Clients\IObservableRepositoryDeployKeysClient.cs" />
     <Compile Include="Clients\IObservableUserKeysClient.cs" />
+    <Compile Include="Clients\ObservableMergingClient.cs" />
     <Compile Include="Clients\ObservableRepositoryDeployKeysClient.cs" />
     <Compile Include="Clients\ObservableOauthClient.cs" />
+    <Compile Include="Clients\IObservableRepositoryContentsClient.cs" />
     <Compile Include="Clients\ObservableRepositoryCommentsClient.cs" />
     <Compile Include="Clients\IObservableRepositoryCommentsClient.cs" />
+    <Compile Include="Clients\IObservableRepositoryHooksClient.cs" />
+    <Compile Include="Clients\IObservableRepositoryForksClient.cs" />
     <Compile Include="Clients\IObservableDeploymentsClient.cs" />
     <Compile Include="Clients\IObservableDeploymentStatusClient.cs" />
     <Compile Include="Clients\IObservableFeedsClient.cs" />
@@ -94,6 +100,7 @@
     <Compile Include="Clients\ObservableFeedsClient.cs" />
     <Compile Include="Clients\ObservableIssuesLabelsClient.cs" />
     <Compile Include="Clients\ObservableRepositoryCommitsClients.cs" />
+    <Compile Include="Clients\ObservableRepositoryContentsClient.cs" />
     <Compile Include="Clients\ObservableSearchClient.cs" />
     <Compile Include="Clients\IObservableBlobsClient.cs" />
     <Compile Include="Clients\IObservableGistCommentsClient.cs" />
@@ -140,6 +147,7 @@
     <Compile Include="Clients\ObservablePullRequestReviewCommentsClient.cs" />
     <Compile Include="Clients\ObservableReleasesClient.cs" />
     <Compile Include="Clients\ObservableRepositoriesClient.cs" />
+    <Compile Include="Clients\ObservableRepositoryHooksClient.cs" />
     <Compile Include="Clients\ObservableSshKeysClient.cs" />
     <Compile Include="Clients\ObservableStarredClient.cs" />
     <Compile Include="Clients\ObservableStatisticsClient.cs" />
@@ -151,6 +159,7 @@
     <Compile Include="Clients\ObservableUsersClient.cs" />
     <Compile Include="Clients\IObservableAssigneesClient.cs" />
     <Compile Include="Clients\IObservableNotificationsClient.cs" />
+    <Compile Include="Clients\ObservableRepositoryForksClient.cs" />
     <Compile Include="Clients\ObservableWatchedClient.cs" />
     <Compile Include="Helpers\AuthorizationExtensions.cs" />
     <Compile Include="Helpers\ConnectionExtensions.cs" />
@@ -184,7 +193,6 @@
       <Name>Octokit</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <UsingTask TaskName="DocPlagiarizerTask" AssemblyFile="..\packages\DocPlagiarizer.0.1.2\tools\DocPlagiarizer.dll" />
   <Target Name="DocPlagiarizerTarget" BeforeTargets="Build">

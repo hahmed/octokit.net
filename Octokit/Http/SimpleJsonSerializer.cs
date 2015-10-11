@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using Octokit.Reflection;
 
@@ -23,49 +23,28 @@ namespace Octokit.Internal
 
         class GitHubSerializerStrategy : PocoJsonSerializerStrategy
         {
-            readonly List<string> _membersWhichShouldPublishNull
-                 = new List<string>();
+            readonly List<string> _membersWhichShouldPublishNull = new List<string>();
 
-            protected override string MapClrMemberNameToJsonFieldName(string clrPropertyName)
+            protected override string MapClrMemberToJsonFieldName(MemberInfo member)
             {
-                var rubyCased = clrPropertyName.ToRubyCase();
-                if (rubyCased == "links") return "_links"; // Special case for GitHub API
-                return rubyCased;
+                return member.GetJsonFieldName();
             }
 
             internal override IDictionary<string, ReflectionUtils.GetDelegate> GetterValueFactory(Type type)
             {
-                var fullName = type.FullName + "-";
+                var propertiesAndFields = type.GetPropertiesAndFields().Where(p => p.CanSerialize).ToList();
 
-                // sometimes Octokit needs to send a null with the payload so the user
-                // can unset the value of a property.
-                // This method uses the same checks as PocoJsonSerializerStrategy
-                // to identify the right fields and properties to serialize
-                // but it then filters on the presence of SerializeNullAttribute.
-
-                foreach (var propertyInfo in ReflectionUtils.GetProperties(type))
+                foreach (var property in propertiesAndFields.Where(p => p.SerializeNull))
                 {
-                    if (!propertyInfo.CanRead)
-                        continue;
-                    var getMethod = ReflectionUtils.GetGetterMethodInfo(propertyInfo);
-                    if (getMethod.IsStatic || !getMethod.IsPublic)
-                        continue;
-                    var attribute = propertyInfo.GetCustomAttribute<SerializeNullAttribute>();
-                    if (attribute == null)
-                        continue;
-                    _membersWhichShouldPublishNull.Add(fullName + MapClrMemberNameToJsonFieldName(propertyInfo.Name));
-                }
-                foreach (var fieldInfo in ReflectionUtils.GetFields(type))
-                {
-                    if (fieldInfo.IsStatic || !fieldInfo.IsPublic)
-                        continue;
-                    var attribute = fieldInfo.GetCustomAttribute<SerializeNullAttribute>();
-                    if (attribute == null)
-                        continue;
-                    _membersWhichShouldPublishNull.Add(fullName + MapClrMemberNameToJsonFieldName(fieldInfo.Name));
+                    var key = type.FullName + "-" + property.JsonFieldName;
+                    
+                    _membersWhichShouldPublishNull.Add(key);
                 }
 
-                return base.GetterValueFactory(type);
+                return propertiesAndFields
+                    .ToDictionary(
+                        p => p.JsonFieldName,
+                        p => p.GetDelegate);
             }
 
             // This is overridden so that null values are omitted from serialized objects.
@@ -88,8 +67,7 @@ namespace Octokit.Internal
                             if (!_membersWhichShouldPublishNull.Contains(key))
                                 continue;
                         }
-
-                        jsonObject.Add(MapClrMemberNameToJsonFieldName(getter.Key), value);
+                        jsonObject.Add(getter.Key, value);
                     }
                 }
                 output = jsonObject;
@@ -103,16 +81,20 @@ namespace Octokit.Internal
                 return p.ToString().ToLowerInvariant();
             }
 
+            private string _type;
+
             // Overridden to handle enums.
             public override object DeserializeObject(object value, Type type)
             {
                 var stringValue = value as string;
+                var jsonValue = value as JsonObject;
                 if (stringValue != null)
                 {
+                    stringValue = stringValue.Replace("-", "");
                     if (ReflectionUtils.GetTypeInfo(type).IsEnum)
                     {
                         // remove '-' from values coming in to be able to enum utf-8
-                        stringValue = stringValue.Replace("-", "");
+                        stringValue = RemoveHyphenAndUnderscore(stringValue);
                         return Enum.Parse(type, stringValue, ignoreCase: true);
                     }
 
@@ -121,6 +103,7 @@ namespace Octokit.Internal
                         var underlyingType = Nullable.GetUnderlyingType(type);
                         if (ReflectionUtils.GetTypeInfo(underlyingType).IsEnum)
                         {
+                            stringValue = RemoveHyphenAndUnderscore(stringValue);
                             return Enum.Parse(underlyingType, stringValue, ignoreCase: true);
                         }
                     }
@@ -136,8 +119,63 @@ namespace Octokit.Internal
                         }
                     }
                 }
+                else if (jsonValue != null)
+                {
+                    if (type == typeof(Activity))
+                    {
+                        _type = jsonValue["type"].ToString();
+                    }
+                }
+
+                if (type == typeof(ActivityPayload))
+                {
+                    var payloadType = GetPayloadType(_type);
+                    return base.DeserializeObject(value, payloadType);
+                }
 
                 return base.DeserializeObject(value, type);
+            }
+
+            static string RemoveHyphenAndUnderscore(string stringValue)
+            {
+                // remove '-' from values coming in to be able to enum utf-8
+                stringValue = stringValue.Replace("-", "");
+                // remove '-' from values coming in to be able to enum EventInfoState names with underscores in them. Like "head_ref_deleted" 
+                stringValue = stringValue.Replace("_", "");
+                return stringValue;
+            }
+
+            internal override IDictionary<string, KeyValuePair<Type, ReflectionUtils.SetDelegate>> SetterValueFactory(Type type)
+            {
+                return type.GetPropertiesAndFields()
+                    .Where(p => p.CanDeserialize)
+                    .ToDictionary(
+                        p => p.JsonFieldName,
+                        p => new KeyValuePair<Type, ReflectionUtils.SetDelegate>(p.Type, p.SetDelegate));
+            }
+
+            private static Type GetPayloadType(string activityType)
+            {
+                switch (activityType)
+                {
+                    case "CommitCommentEvent":
+                        return typeof(CommitCommentPayload);
+                    case "ForkEvent":
+                        return typeof(ForkEventPayload);
+                    case "IssueCommentEvent":
+                        return typeof(IssueCommentPayload);
+                    case "IssuesEvent":
+                        return typeof(IssueEventPayload);
+                    case "PullRequestEvent":
+                        return typeof(PullRequestEventPayload);
+                    case "PullRequestReviewCommentEvent":
+                        return typeof(PullRequestCommentPayload);
+                    case "PushEvent":
+                        return typeof(PushEventPayload);
+                    case "WatchEvent":
+                        return typeof(StarredEventPayload);
+                }
+                return typeof(ActivityPayload);
             }
         }
     }

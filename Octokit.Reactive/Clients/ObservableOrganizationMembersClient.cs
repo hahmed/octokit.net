@@ -68,13 +68,26 @@ namespace Octokit.Reactive
         /// for more information.
         /// </remarks>
         /// <param name="org">The login for the organization</param>
-        /// <param name="filter">The filter expression to use</param>
+        /// <param name="filter">The members filter, <see cref="OrganizationMembersFilter"/> </param>
         /// <returns></returns>
+        public IObservable<User> GetAll(string org, OrganizationMembersFilter filter)
+        {
+            Ensure.ArgumentNotNullOrEmptyString(org, "org");
+            
+            return _connection.GetAndFlattenAllPages<User>(ApiUrls.Members(org, filter));
+        }
+
+        /// <summary>
+        /// Obsolete, <see cref="GetAll(string,OrganizationMembersFilter)"/>
+        /// </summary>
+        /// <param name="org">The login for the organization</param>
+        /// <param name="filter">The user filter</param>
+        /// <returns>The users</returns>
+        [Obsolete("No longer supported, use GetAll(string, OrganizationMembersFilter) instead")]
         public IObservable<User> GetAll(string org, string filter)
         {
             Ensure.ArgumentNotNullOrEmptyString(org, "org");
             Ensure.ArgumentNotNullOrEmptyString(filter, "filter");
-
 
             return _connection.GetAndFlattenAllPages<User>(ApiUrls.Members(org, filter));
         }
@@ -85,7 +98,7 @@ namespace Octokit.Reactive
         /// <remarks>http://developer.github.com/v3/orgs/members/#public-members-list</remarks>
         /// <param name="org">The login for the organization</param>
         /// <returns></returns>
-        public IObservable<User> GetPublic(string org)
+        public IObservable<User> GetAllPublic(string org)
         {
             Ensure.ArgumentNotNullOrEmptyString(org, "org");
 

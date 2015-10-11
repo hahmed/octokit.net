@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -10,20 +11,31 @@ namespace Octokit
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class WeeklyCommitActivity
     {
+        public WeeklyCommitActivity() { }
+
+        public WeeklyCommitActivity(IEnumerable<int> days, int total, long week)
+        {
+            Ensure.ArgumentNotNull(days, "days");
+
+            Days = new ReadOnlyCollection<int>(days.ToList());
+            Total = total;
+            Week = week;
+        }
+
         /// <summary>
         /// The days array is a group of commits per day, starting on Sunday.
         /// </summary>
-        public IEnumerable<int> Days { get; set; } 
+        public IReadOnlyList<int> Days { get; protected set; }
 
         /// <summary>
         /// Totally number of commits made this week.
         /// </summary>
-        public int Total { get; set; }
+        public int Total { get; protected set; }
 
         /// <summary>
         /// The week of commits
         /// </summary>
-        public long Week { get; set; }
+        public long Week { get; protected set; }
 
         public DateTimeOffset WeekTimestamp
         {

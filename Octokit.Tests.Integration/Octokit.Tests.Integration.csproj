@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props" Condition="Exists('..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props')" />
+  <Import Project="..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props" Condition="Exists('..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -11,6 +13,8 @@
     <AssemblyName>Octokit.Tests.Integration</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <NuGetPackageImportStamp>884d959c</NuGetPackageImportStamp>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -50,19 +54,29 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Xml" />
-    <Reference Include="xunit, Version=1.9.2.1705, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\xunit.1.9.2\lib\net20\xunit.dll</HintPath>
+    <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
     </Reference>
-    <Reference Include="xunit.extensions, Version=1.9.2.1705, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+    <Reference Include="xunit.assert, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\xunit.extensions.1.9.2\lib\net20\xunit.extensions.dll</HintPath>
+      <HintPath>..\packages\xunit.assert.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.assert.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.core, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\xunit.extensibility.core.2.0.0\lib\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.execution.desktop, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\xunit.extensibility.execution.2.0.0\lib\net45\xunit.execution.desktop.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Clients\AssigneesClientTests.cs" />
+    <Compile Include="Clients\AuthorizationClientTests.cs" />
     <Compile Include="Clients\BlobClientTests.cs" />
     <Compile Include="Clients\BranchesClientTests.cs" />
+    <Compile Include="Clients\GitHubClientTests.cs" />
+    <Compile Include="Clients\MergingClientTests.cs" />
     <Compile Include="Clients\CommitsClientTests.cs" />
     <Compile Include="Clients\CommitStatusClientTests.cs" />
     <Compile Include="Clients\DeploymentsClientTests.cs" />
@@ -75,21 +89,31 @@
     <Compile Include="Clients\PullRequestsClientTests.cs" />
     <Compile Include="Clients\ReferencesClientTests.cs" />
     <Compile Include="Clients\RepositoryCommitsClientTests.cs" />
+    <Compile Include="Clients\RepositoryContentsClientTests.cs" />
     <Compile Include="Clients\RepositoryDeployKeysClientTests.cs" />
+    <Compile Include="Clients\RepositoryForksClientTests.cs" />
+    <Compile Include="Clients\RepositoryHooksClientTests.cs" />
     <Compile Include="Clients\SearchClientTests.cs" />
     <Compile Include="Clients\StatisticsClientTests.cs" />
     <Compile Include="Clients\TreeClientTests.cs" />
     <Compile Include="Clients\UserEmailsClientTests.cs" />
     <Compile Include="Clients\FollowersClientTests.cs" />
     <Compile Include="Clients\UserKeysClientTests.cs" />
+    <Compile Include="fixtures\RepositoriesHooksCollection.cs" />
+    <Compile Include="fixtures\RepositoriesHooksFixture.cs" />
+    <Compile Include="Helpers\ApplicationTestAttribute.cs" />
+    <Compile Include="Helpers\GithubClientExtensions.cs" />
+    <Compile Include="Helpers\PersonalAccessTokenTestAttribute.cs" />
+    <Compile Include="Helpers\PaidAccountTestAttribute.cs" />
+    <Compile Include="Helpers\RepositoryContext.cs" />
     <Compile Include="Helpers\RepositorySetupHelper.cs" />
     <Compile Include="HttpClientAdapterTests.cs" />
     <Compile Include="Clients\TeamsClientTests.cs" />
-    <Compile Include="IntegrationTestAttribute.cs" />
+    <Compile Include="Helpers\IntegrationTestAttribute.cs" />
     <Compile Include="Clients\PullRequestReviewCommentsClientTests.cs" />
     <Compile Include="Clients\IssuesClientTests.cs" />
     <Compile Include="Clients\MiscellaneousClientTests.cs" />
-    <Compile Include="OrganizationTestAttribute.cs" />
+    <Compile Include="Helpers\OrganizationTestAttribute.cs" />
     <Compile Include="Reactive\ObservableIssuesClientTests.cs" />
     <Compile Include="Reactive\ObservableMilestonesClientTests.cs" />
     <Compile Include="Reactive\ObservableRepositoriesClientTests.cs" />
@@ -101,6 +125,7 @@
     <Compile Include="Reactive\ObservableRespositoryDeployKeysClientTests.cs" />
     <Compile Include="Reactive\ObservableUserEmailsClientTests.cs" />
     <Compile Include="Reactive\ObservableTeamsClientTests.cs" />
+    <Compile Include="RedirectTests.cs" />
     <Compile Include="SelfTests.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +155,13 @@
     <EmbeddedResource Include="fixtures\hello-world.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.core.props'))" />
+    <Error Condition="!Exists('..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.runner.visualstudio.2.0.0\build\net20\xunit.runner.visualstudio.props'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,6 +1,6 @@
-﻿using Octokit.Reactive.Internal;
-using System;
+﻿using System;
 using System.Reactive.Threading.Tasks;
+using Octokit.Reactive.Internal;
 
 namespace Octokit.Reactive.Clients
 {
@@ -35,7 +35,7 @@ namespace Octokit.Reactive.Clients
             Ensure.ArgumentNotNullOrEmptyString(name, "name");
 
             return _connection.GetAndFlattenAllPages<Deployment>(
-                ApiUrls.Deployments(owner, name), null, "application/vnd.github.cannonball-preview+json");
+                ApiUrls.Deployments(owner, name));
         }
 
         /// <summary>

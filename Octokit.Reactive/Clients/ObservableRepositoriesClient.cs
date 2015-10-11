@@ -20,6 +20,8 @@ namespace Octokit.Reactive
             _client = client.Repository;
             _connection = client.Connection;
             CommitStatus = new ObservableCommitStatusClient(client);
+            Hooks = new ObservableRepositoryHooksClient(client);
+            Forks = new ObservableRepositoryForksClient(client);
             RepoCollaborators = new ObservableRepoCollaboratorsClient(client);
             Deployment = new ObservableDeploymentsClient(client);
             Statistics = new ObservableStatisticsClient(client);
@@ -27,6 +29,8 @@ namespace Octokit.Reactive
             RepositoryComments = new ObservableRepositoryCommentsClient(client);
             Commits = new ObservableRepositoryCommitsClient(client);
             DeployKeys = new ObservableRepositoryDeployKeysClient(client);
+            Content = new ObservableRepositoryContentsClient(client);
+            Merging = new ObservableMergingClient(client);
         }
 
         /// <summary>
@@ -89,6 +93,35 @@ namespace Octokit.Reactive
         }
 
         /// <summary>
+        /// Retrieves every public <see cref="Repository"/>.
+        /// </summary>
+        /// <remarks>
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        public IObservable<Repository> GetAllPublic()
+        {
+            return _connection.GetAndFlattenAllPages<Repository>(ApiUrls.AllPublicRepositories());
+        }
+
+        /// <summary>
+        /// Retrieves every public <see cref="Repository"/> since the last repository seen.
+        /// </summary>
+        /// <remarks>
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <param name="request">Search parameters of the last repository seen</param>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        public IObservable<Repository> GetAllPublic(PublicRepositoryRequest request)
+        {
+            Ensure.ArgumentNotNull(request, "request");
+
+            var url = ApiUrls.AllPublicRepositories(request.Since);
+
+            return _connection.GetAndFlattenAllPages<Repository>(url);
+        }
+
+        /// <summary>
         /// Retrieves every <see cref="Repository"/> that belongs to the current user.
         /// </summary>
         /// <remarks>
@@ -99,6 +132,22 @@ namespace Octokit.Reactive
         public IObservable<Repository> GetAllForCurrent()
         {
             return _connection.GetAndFlattenAllPages<Repository>(ApiUrls.Repositories());
+        }
+
+        /// <summary>
+        /// Retrieves every <see cref="Repository"/> that belongs to the current user.
+        /// </summary>
+        /// <remarks>
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <param name="request">Search parameters to filter results on</param>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        public IObservable<Repository> GetAllForCurrent(RepositoryRequest request)
+        {
+            Ensure.ArgumentNotNull(request, "request");
+
+            return _connection.GetAndFlattenAllPages<Repository>(ApiUrls.Repositories(), request.ToParametersDictionary());
         }
 
         /// <summary>
@@ -127,34 +176,6 @@ namespace Octokit.Reactive
             Ensure.ArgumentNotNullOrEmptyString(organization, "organization");
 
             return _connection.GetAndFlattenAllPages<Repository>(ApiUrls.OrganizationRepositories(organization));
-        }
-
-        /// <summary>
-        /// Returns the HTML rendered README.
-        /// </summary>
-        /// <param name="owner">The owner of the repository</param>
-        /// <param name="name">The name of the repository</param>
-        /// <returns></returns>
-        public IObservable<Readme> GetReadme(string owner, string name)
-        {
-            Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
-            Ensure.ArgumentNotNullOrEmptyString(name, "name");
-
-            return _client.GetReadme(owner, name).ToObservable();
-        }
-
-        /// <summary>
-        /// Returns just the HTML portion of the README without the surrounding HTML document. 
-        /// </summary>
-        /// <param name="owner">The owner of the repository</param>
-        /// <param name="name">The name of the repository</param>
-        /// <returns></returns>
-        public IObservable<string> GetReadmeHtml(string owner, string name)
-        {
-            Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
-            Ensure.ArgumentNotNullOrEmptyString(name, "name");
-
-            return _client.GetReadmeHtml(owner, name).ToObservable();
         }
 
         /// <summary>
@@ -192,6 +213,35 @@ namespace Octokit.Reactive
         public IObservableRepositoryCommentsClient RepositoryComments { get; private set; }
 
         /// <summary>
+        /// A client for GitHub's Repository Hooks API.
+        /// </summary>
+        /// <remarks>See <a href="http://developer.github.com/v3/repos/hooks/">Hooks API documentation</a> for more information.</remarks>
+        public IObservableRepositoryHooksClient Hooks { get; private set; }
+
+        /// <summary>
+        /// A client for GitHub's Repository Forks API.
+        /// </summary>
+        /// <remarks>See <a href="http://developer.github.com/v3/repos/forks/">Forks API documentation</a> for more information.</remarks>        
+        public IObservableRepositoryForksClient Forks { get; private set; }
+
+        /// <summary>
+        /// Client for GitHub's Repository Contents API.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="http://developer.github.com/v3/repos/contents/">Repository Contents API documentation</a> for more information.
+        /// </remarks>
+        public IObservableRepositoryContentsClient Content { get; private set; }
+
+
+        /// <summary>
+        /// Client for GitHub's Repository Merging API
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/merging/">Merging API documentation</a> for more details
+        ///</remarks>
+        public IObservableMergingClient Merging { get; private set; }
+
+        /// <summary>
         /// Gets all the branches for the specified repository.
         /// </summary>
         /// <remarks>
@@ -219,7 +269,7 @@ namespace Octokit.Reactive
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <returns>All contributors of the repository.</returns>
-        public IObservable<User> GetAllContributors(string owner, string name)
+        public IObservable<RepositoryContributor> GetAllContributors(string owner, string name)
         {
             return GetAllContributors(owner, name, false);
         }
@@ -234,7 +284,7 @@ namespace Octokit.Reactive
         /// <param name="name">The name of the repository</param>
         /// <param name="includeAnonymous">True if anonymous contributors should be included in result; Otherwise false</param>
         /// <returns>All contributors of the repository.</returns>
-        public IObservable<User> GetAllContributors(string owner, string name, bool includeAnonymous)
+        public IObservable<RepositoryContributor> GetAllContributors(string owner, string name, bool includeAnonymous)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(name, "name");
@@ -244,7 +294,7 @@ namespace Octokit.Reactive
             if (includeAnonymous)
                 parameters.Add("anon", "1");
 
-            return _connection.GetAndFlattenAllPages<User>(endpoint, parameters);
+            return _connection.GetAndFlattenAllPages<RepositoryContributor>(endpoint, parameters);
         }
 
         /// <summary>

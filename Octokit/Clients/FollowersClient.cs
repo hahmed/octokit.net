@@ -54,7 +54,7 @@ namespace Octokit
         /// See the <a href="http://developer.github.com/v3/users/followers/#list-users-followed-by-another-user">API documentation</a> for more information.
         /// </remarks>
         /// <returns>A <see cref="IReadOnlyList{User}"/> of <see cref="User"/>s that the authenticated user follows.</returns>
-        public Task<IReadOnlyList<User>> GetFollowingForCurrent()
+        public Task<IReadOnlyList<User>> GetAllFollowingForCurrent()
         {
             return ApiConnection.GetAll<User>(ApiUrls.Following());
         }
@@ -67,7 +67,7 @@ namespace Octokit
         /// See the <a href="http://developer.github.com/v3/users/followers/#list-users-followed-by-another-user">API documentation</a> for more information.
         /// </remarks>
         /// <returns>A <see cref="IReadOnlyList{User}"/> of <see cref="User"/>s that the passed user follows.</returns>
-        public Task<IReadOnlyList<User>> GetFollowing(string login)
+        public Task<IReadOnlyList<User>> GetAllFollowing(string login)
         {
             Ensure.ArgumentNotNullOrEmptyString(login, "login");
 
@@ -90,11 +90,7 @@ namespace Octokit
             {
                 var response = await Connection.Get<object>(ApiUrls.IsFollowing(following), null, null)
                                                 .ConfigureAwait(false);
-                if(response.StatusCode != HttpStatusCode.NotFound && response.StatusCode != HttpStatusCode.NoContent)
-                {
-                    throw new ApiException("Invalid Status Code returned. Expected a 204 or a 404", response.StatusCode);
-                }
-                return response.StatusCode == HttpStatusCode.NoContent;
+                return response.HttpResponse.IsTrue();
             }
             catch (NotFoundException)
             {
@@ -120,11 +116,7 @@ namespace Octokit
             {
                 var response = await Connection.Get<object>(ApiUrls.IsFollowing(login, following), null, null)
                                                 .ConfigureAwait(false);
-                if (response.StatusCode != HttpStatusCode.NotFound && response.StatusCode != HttpStatusCode.NoContent)
-                {
-                    throw new ApiException("Invalid Status Code returned. Expected a 204 or a 404", response.StatusCode);
-                }
-                return response.StatusCode == HttpStatusCode.NoContent;
+                return response.HttpResponse.IsTrue();
             }
             catch (NotFoundException)
             {
@@ -149,11 +141,11 @@ namespace Octokit
                 var requestData = new { };
                 var response = await Connection.Put<object>(ApiUrls.IsFollowing(login), requestData)
                                                 .ConfigureAwait(false);
-                if (response.StatusCode != HttpStatusCode.NoContent)
+                if (response.HttpResponse.StatusCode != HttpStatusCode.NoContent)
                 {
-                    throw new ApiException("Invalid Status Code returned. Expected a 204", response.StatusCode);
+                    throw new ApiException("Invalid Status Code returned. Expected a 204", response.HttpResponse.StatusCode);
                 }
-                return response.StatusCode == HttpStatusCode.NoContent;
+                return response.HttpResponse.StatusCode == HttpStatusCode.NoContent;
             }
             catch (NotFoundException)
             {

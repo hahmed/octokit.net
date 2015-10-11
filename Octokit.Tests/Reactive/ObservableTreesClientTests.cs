@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using System.Threading.Tasks;
 using NSubstitute;
 using Octokit.Reactive;
@@ -28,12 +29,39 @@ namespace Octokit.Tests
             {
                 var client = new ObservableTreesClient(Substitute.For<IGitHubClient>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get(null, "name", "123456ABCD"));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Get("", "name", "123456ABCD"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", null, "123456ABCD"));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Get("owner", "", "123456ABCD"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", "name", null));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Get("owner", "name", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get(null, "name", "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Get("", "name", "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", null, "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Get("owner", "", "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", "name", null).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Get("owner", "name", "").ToTask());
+            }
+        }
+        
+        public class TheGetRecursiveMethod
+        {
+            [Fact]
+            public void GetsFromClientIssueIssue()
+            {
+                var gitHubClient = Substitute.For<IGitHubClient>();
+                var client = new ObservableTreesClient(gitHubClient);
+
+                client.GetRecursive("fake", "repo", "123456ABCD");
+
+                gitHubClient.GitDatabase.Tree.Received().GetRecursive("fake", "repo", "123456ABCD");
+            }
+
+            [Fact]
+            public async Task EnsuresNonNullArguments()
+            {
+                var client = new ObservableTreesClient(Substitute.For<IGitHubClient>());
+
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetRecursive(null, "name", "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetRecursive("", "name", "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetRecursive("owner", null, "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetRecursive("owner", "", "123456ABCD").ToTask());
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetRecursive("owner", "name", null).ToTask());
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetRecursive("owner", "name", "").ToTask());
             }
         }
         

@@ -10,6 +10,7 @@
     <RootNamespace>Octokit</RootNamespace>
     <AssemblyName>Octokit</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,6 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\Release\Mono\Octokit.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -60,13 +62,17 @@
     <Compile Include="Clients\IIssueCommentsClient.cs" />
     <Compile Include="Clients\IIssuesEventsClient.cs" />
     <Compile Include="Clients\IIssuesLabelsClient.cs" />
+    <Compile Include="Clients\IMergingClient.cs" />
     <Compile Include="Clients\IOrganizationMembersClient.cs" />
     <Compile Include="Clients\IReferencesClient.cs" />
     <Compile Include="Clients\IPullRequestsClient.cs" />
+    <Compile Include="Clients\IRepositoryForksClient.cs" />
+    <Compile Include="Clients\IRepositoryHooksClient.cs" />
     <Compile Include="Clients\IssueCommentsClient.cs" />
     <Compile Include="Clients\IssuesClient.cs" />
     <Compile Include="Clients\IssuesEventsClient.cs" />
     <Compile Include="Clients\IssuesLabelsClient.cs" />
+    <Compile Include="Clients\MergingClient.cs" />
     <Compile Include="Clients\IStarredClient.cs" />
     <Compile Include="Clients\IStatisticsClient.cs" />
     <Compile Include="Clients\ITagsClient.cs" />
@@ -76,6 +82,8 @@
     <Compile Include="Clients\MilestonesClient.cs" />
     <Compile Include="Clients\OrganizationMembersClient.cs" />
     <Compile Include="Clients\ReferencesClient.cs" />
+    <Compile Include="Clients\RepositoryForksClient.cs" />
+    <Compile Include="Clients\RepositoryHooksClient.cs" />
     <Compile Include="Clients\StarredClient.cs" />
     <Compile Include="Clients\PullRequestsClient.cs" />
     <Compile Include="Clients\StatisticsClient.cs" />
@@ -89,8 +97,10 @@
     <Compile Include="Clients\IMilestonesClient.cs" />
     <Compile Include="Helpers\ParameterAttribute.cs" />
     <Compile Include="Helpers\ReflectionExtensions.cs" />
+    <Compile Include="Models\Request\GistFileUpdate.cs" />
     <Compile Include="Models\Request\GistRequest.cs" />
     <Compile Include="Models\Request\GistUpdate.cs" />
+    <Compile Include="Models\Request\EditRepositoryHook.cs" />
     <Compile Include="Models\Request\LabelUpdate.cs" />
     <Compile Include="Models\Request\MergePullRequest.cs" />
     <Compile Include="Models\Request\MilestoneUpdate.cs" />
@@ -99,8 +109,11 @@
     <Compile Include="Models\Request\NewCommitStatus.cs" />
     <Compile Include="Models\Request\NewGist.cs" />
     <Compile Include="Models\Request\NewLabel.cs" />
+    <Compile Include="Models\Request\NewMerge.cs" />
     <Compile Include="Models\Request\NewMilestone.cs" />
     <Compile Include="Models\Request\NewReference.cs" />
+    <Compile Include="Models\Request\NewRepositoryFork.cs" />
+    <Compile Include="Models\Request\NewRepositoryHook.cs" />
     <Compile Include="Models\Request\NewSubscription.cs" />
     <Compile Include="Models\Request\NewTag.cs" />
     <Compile Include="Models\Request\NewTree.cs" />
@@ -115,6 +128,16 @@
     <Compile Include="Models\Request\RequestParameters.cs" />
     <Compile Include="Models\Request\StarredRequest.cs" />
     <Compile Include="Models\Request\UpdateTeam.cs" />
+    <Compile Include="Models\Response\AccountType.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\ActivityPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\CommitCommentPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\ForkEventPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\IssueCommentPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\IssueEventPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\PullRequestCommentPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\PullRequestEventPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\PushEventPayload.cs" />
+    <Compile Include="Models\Response\ActivityPayloads\StarredEventPayload.cs" />
     <Compile Include="Models\Response\Author.cs" />
     <Compile Include="Models\Response\Branch.cs" />
     <Compile Include="Models\Response\Commit.cs" />
@@ -139,6 +162,7 @@
     <Compile Include="Models\Response\IssueComment.cs" />
     <Compile Include="Models\Response\IssueEvent.cs" />
     <Compile Include="Models\Response\Label.cs" />
+    <Compile Include="Models\Response\Merge.cs" />
     <Compile Include="Models\Response\Milestone.cs" />
     <Compile Include="Models\Request\NewIssue.cs" />
     <Compile Include="Models\Response\Notification.cs" />
@@ -148,7 +172,8 @@
     <Compile Include="Models\Request\MilestoneRequest.cs" />
     <Compile Include="Models\Response\Reference.cs" />
     <Compile Include="Models\Response\PullRequestMerge.cs" />
-    <Compile Include="Models\Response\Signature.cs" />
+    <Compile Include="Models\Response\RepositoryContributor.cs" />
+    <Compile Include="Models\Response\RepositoryHook.cs" />
     <Compile Include="Models\Response\Subscription.cs" />
     <Compile Include="Models\Response\TagObject.cs" />
     <Compile Include="Models\Response\TreeItem.cs" />
@@ -245,7 +270,6 @@
     <Compile Include="Models\Response\ReadmeResponse.cs" />
     <Compile Include="Models\Response\Release.cs" />
     <Compile Include="Models\Response\ReleaseAsset.cs" />
-    <Compile Include="Models\Response\ReleaseAssetUpload.cs" />
     <Compile Include="Models\Request\ReleaseUpdate.cs" />
     <Compile Include="Models\Response\Repository.cs" />
     <Compile Include="Models\Response\SshKey.cs" />
@@ -323,6 +347,7 @@
     <Compile Include="Clients\IRepositoryCommitsClient.cs" />
     <Compile Include="Clients\RepositoryCommitsClient.cs" />
     <Compile Include="Models\Response\GitHubCommit.cs" />
+    <Compile Include="Models\Response\GitHubCommitStats.cs" />
     <Compile Include="Helpers\ConcurrentCache.cs" />
     <Compile Include="Clients\IOAuthClient.cs" />
     <Compile Include="Clients\OAuthClient.cs" />
@@ -335,11 +360,49 @@
     <Compile Include="Models\Response\DeployKey.cs" />
     <Compile Include="Clients\IUserKeysClient.cs" />
     <Compile Include="Clients\UserKeysClient.cs" />
-    <Compile Include="Models\Request\PublicKey.cs" />
     <Compile Include="Helpers\ApiUrls.Keys.cs" />
     <Compile Include="Helpers\SerializeNullAttribute.cs" />
     <Compile Include="Models\Request\CommitRequest.cs" />
     <Compile Include="Models\Response\RepositoryPermissions.cs" />
+    <Compile Include="Models\Response\CombinedCommitStatus.cs" />
+    <Compile Include="Models\Request\NewRelease.cs" />
+    <Compile Include="Models\Request\NotificationsRequest.cs" />
+    <Compile Include="Models\Response\ThreadSubscription.cs" />
+    <Compile Include="Models\Request\MarkAsReadRequest.cs" />
+    <Compile Include="Models\Request\NewThreadSubscription.cs" />
+    <Compile Include="Clients\IRepositoryContentsClient.cs" />
+    <Compile Include="Clients\RepositoryContentsClient.cs" />
+    <Compile Include="Models\Request\CreateFileRequest.cs" />
+    <Compile Include="Models\Request\Signature.cs" />
+    <Compile Include="Helpers\SerializeAsBase64Attribute.cs" />
+    <Compile Include="Models\Response\ContentType.cs" />
+    <Compile Include="Models\Response\RepositoryContent.cs" />
+    <Compile Include="Models\Response\RepositoryContentChangeSet.cs" />
+    <Compile Include="Models\Response\CommitContent.cs" />
+    <Compile Include="Helpers\PropertyOrField.cs" />
+    <Compile Include="Helpers\ApiUrls.Authorizations.cs" />
+    <Compile Include="Models\Response\ApplicationAuthorization.cs" />
+    <Compile Include="Models\Response\SearchResult.cs" />
+    <Compile Include="Http\Response.cs" />
+    <Compile Include="Models\Response\PublicKey.cs" />
+    <Compile Include="Models\Request\ReleaseAssetUpload.cs" />
+    <Compile Include="Models\Request\RepositoryRequest.cs" />
+    <Compile Include="Models\Request\RepositoryForksListRequest.cs" />
+    <Compile Include="Models\Response\GitIgnoreTemplate.cs" />
+    <Compile Include="Models\Response\License.cs" />
+    <Compile Include="Models\Response\LicenseMetadata.cs" />
+    <Compile Include="Models\Response\PullRequestFile.cs" />
+    <Compile Include="Models\Request\PublicRepositoryRequest.cs" />
+    <Compile Include="Exceptions\TwoFactorAuthorizationException.cs" />
+    <Compile Include="Http\HttpMessageHandlerFactory.cs" />
+    <Compile Include="Models\Response\TeamMembership.cs" />
+    <Compile Include="Models\Response\ResourceRateLimit.cs" />
+    <Compile Include="Models\Response\MiscellaneousRateLimit.cs" />
+    <Compile Include="Exceptions\RepositoryFormatException.cs" />
+    <Compile Include="Http\RequestBody.cs" />
+    <Compile Include="Http\IApiInfoProvider.cs" />
+    <Compile Include="Models\Response\Meta.cs" />
+    <Compile Include="Models\Common\Committer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

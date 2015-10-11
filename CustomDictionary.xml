@@ -19,6 +19,9 @@
       <Word>Prerelease</Word>
       <Word>Commitish</Word>
       <Word>Mergeable</Word>
+      <Word>Symlink</Word>
+      <Word>Submodule</Word>
+      <Word>Forkee</Word>
     </Recognized>
   </Words>
   <Acronyms>

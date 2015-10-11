@@ -4,11 +4,9 @@ using Octokit.Internal;
 using Octokit.Tests.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Extensions;
 
 public class GistsClientTests
 {
@@ -124,6 +122,44 @@ public class GistsClientTests
         }
     }
 
+    public class TheGetChildrenMethods
+    {
+        [Fact]
+        public async Task EnsureNonNullArguments()
+        {
+            var connection = Substitute.For<IApiConnection>();
+            var client = new GistsClient(connection);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllCommits(null));
+            await Assert.ThrowsAsync<ArgumentException>(() => client.GetAllCommits(""));
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllForks(null));
+            await Assert.ThrowsAsync<ArgumentException>(() => client.GetAllForks(""));
+        }
+
+        [Fact]
+        public void RequestsCorrectGetCommitsUrl()
+        {
+            var connection = Substitute.For<IApiConnection>();
+            var client = new GistsClient(connection);
+
+            client.GetAllCommits("9257657");
+
+            connection.Received().GetAll<GistHistory>(Arg.Is<Uri>(u => u.ToString() == "gists/9257657/commits"));
+        }
+
+        [Fact]
+        public void RequestsCorrectGetForksUrl()
+        {
+            var connection = Substitute.For<IApiConnection>();
+            var client = new GistsClient(connection);
+
+            client.GetAllForks("9257657");
+
+            connection.Received().GetAll<GistFork>(Arg.Is<Uri>(u => u.ToString() == "gists/9257657/forks"));
+        }
+    }
+
     public class TheCreateMethod
     {
         [Fact]
@@ -163,7 +199,7 @@ public class GistsClientTests
             var connection = Substitute.For<IApiConnection>();
             var client = new GistsClient(connection);
 
-            Assert.Throws<ArgumentNullException>(() => client.Delete(null));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => client.Delete(null));
         }
     }
 
@@ -196,8 +232,8 @@ public class GistsClientTests
         [InlineData(HttpStatusCode.NotFound, false)]
         public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
         {
-            var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                new ApiResponse<object> { StatusCode = status });
+            var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
             var connection = Substitute.For<IConnection>();
             connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "gists/1/star"),
                 null, null).Returns(response);
@@ -213,8 +249,8 @@ public class GistsClientTests
         [Fact]
         public async Task ThrowsExceptionForInvalidStatusCode()
         {
-            var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+            var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
             var connection = Substitute.For<IConnection>();
             connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "gists/1/star"),
                 null, null).Returns(response);
@@ -223,7 +259,7 @@ public class GistsClientTests
 
             var client = new GistsClient(apiConnection);
 
-            await AssertEx.Throws<ApiException>(async () => await client.IsStarred("1"));
+            await Assert.ThrowsAsync<ApiException>(() => client.IsStarred("1"));
         }
     }
 

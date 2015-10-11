@@ -1,8 +1,12 @@
-﻿using System.Diagnostics;
-using Octokit.Internal;
+﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace Octokit
 {
+    /// <summary>
+    /// Used to create a reply to a pull request review comment.
+    /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class PullRequestReviewCommentReplyCreate : RequestParameters
     {
@@ -28,5 +32,10 @@ namespace Octokit
         /// The comment Id to reply to.
         /// </summary>
         public int InReplyTo { get; private set; }
+
+        internal string DebuggerDisplay
+        {
+            get { return String.Format(CultureInfo.InvariantCulture, "InReplyTo: {0}, Body: {1}", InReplyTo, Body); }
+        }
     }
 }

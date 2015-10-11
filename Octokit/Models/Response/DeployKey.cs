@@ -1,20 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Octokit
 {
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class DeployKey
     {
-        public int Id { get; set; } 
-        public string Key { get; set; }
-        public string Url { get; set; }
-        public string Title { get; set; }
+        public DeployKey() { }
+
+        public DeployKey(int id, string key, string url, string title)
+        {
+            Id = id;
+            Key = key;
+            Url = url;
+            Title = title;
+        }
+
+        public int Id { get; protected set; } 
+        public string Key { get; protected set; }
+        public string Url { get; protected set; }
+        public string Title { get; protected set; }
 
         internal string DebuggerDisplay
         {

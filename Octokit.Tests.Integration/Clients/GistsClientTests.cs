@@ -13,12 +13,9 @@ public class GistsClientTests
 
     public GistsClientTests()
     {
-        var client = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-        {
-            Credentials = Helper.Credentials
-        };
+        var github = Helper.GetAuthenticatedClient();
 
-        _fixture = client.Gist;
+        _fixture = github.Gist;
     }
 
     [IntegrationTest]
@@ -82,7 +79,7 @@ public class GistsClientTests
         await _fixture.Delete(forkedGist.Id);
     }
 
-    [IntegrationTest]
+    [IntegrationTest(Skip="OH GOD THIS TEST IS INSANE AND I DON'T KNOW WHY I DID THIS")]
     public async Task CanListGists()
     {
         // Time is tricky between local and remote, be lenient
@@ -119,5 +116,17 @@ public class GistsClientTests
         Assert.True(starredGistsSinceStartTime.Any(x => x.Id == createdGist.Id));
 
         await _fixture.Delete(createdGist.Id);
+    }
+
+    [IntegrationTest]
+    public async Task CanGetGistChildren()
+    {
+        // Test History/Commits
+        var commits = await _fixture.GetAllCommits(testGistId);
+        Assert.NotEmpty(commits);
+
+        // Test Forks
+        var forks = await _fixture.GetAllForks(testGistId);
+        Assert.NotEmpty(forks);
     }
 }

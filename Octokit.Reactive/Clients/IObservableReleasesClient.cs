@@ -43,7 +43,7 @@ namespace Octokit.Reactive
         /// <param name="data">A description of the release to create</param>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The created <see cref="Release"/>.</returns>
-        IObservable<Release> Create(string owner, string name, ReleaseUpdate data);
+        IObservable<Release> Create(string owner, string name, NewRelease data);
 
         /// <summary>
         /// Edits an existing <see cref="Release"/> for the specified repository.
@@ -83,7 +83,7 @@ namespace Octokit.Reactive
         /// <param name="id">The id of the <see cref="Release"/>.</param>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The list of <see cref="ReleaseAsset"/> for the specified release of the specified repository.</returns>
-        IObservable<ReleaseAsset> GetAssets(string owner, string name, int id);
+        IObservable<ReleaseAsset> GetAllAssets(string owner, string name, int id);
 
         /// <summary>
         /// Uploads a <see cref="ReleaseAsset"/> for the specified release.

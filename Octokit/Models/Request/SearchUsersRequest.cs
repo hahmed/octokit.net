@@ -1,7 +1,7 @@
-﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -14,6 +14,10 @@ namespace Octokit
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class SearchUsersRequest : BaseSearchRequest
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SearchUsersRequest"/> class.
+        /// </summary>
+        /// <param name="term">The search term.</param>
         public SearchUsersRequest(string term) : base(term)
         {
         }
@@ -24,6 +28,9 @@ namespace Octokit
         /// </summary>
         public UsersSearchSort? SortField { get; set; }
 
+        /// <summary>
+        /// The sort field as a string.
+        /// </summary>
         public override string Sort
         {
             get { return SortField.ToParameter(); }
@@ -63,7 +70,7 @@ namespace Octokit
         /// With this qualifier you can restrict the search to just personal accounts or just organization accounts.
         /// <remarks>https://help.github.com/articles/searching-users#type</remarks>       
         /// </summary>
-        public AccountType? AccountType { get; set; }
+        public AccountSearchType? AccountType { get; set; }
 
         private IEnumerable<UserInQualifier> _inQualifier;
 
@@ -84,7 +91,7 @@ namespace Octokit
             }
         }
 
-        public override IReadOnlyCollection<string> MergedQualifiers()
+        public override IReadOnlyList<string> MergedQualifiers()
         {
             var parameters = new List<string>();
 
@@ -135,21 +142,45 @@ namespace Octokit
         }
     }
 
-    public enum AccountType
+    /// <summary>
+    /// Account Type used to filter search result
+    /// </summary>
+    public enum AccountSearchType
     {
+        /// <summary>
+        ///  User account
+        /// </summary>
         User,
+        /// <summary>
+        /// Organization account
+        /// </summary>
         Org
     }
 
+    /// <summary>
+    /// User type to filter search results
+    /// </summary>
     public enum UserInQualifier
     {
+        /// <summary>
+        /// Search by the username
+        /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "Username")]
         Username,
+        /// <summary>
+        /// Search by the user's email address
+        /// </summary>
         Email,
+        /// <summary>
+        /// Search by the user's full name
+        /// </summary>
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Fullname")]
         Fullname
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public enum UsersSearchSort
     {
         Followers,

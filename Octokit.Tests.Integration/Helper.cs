@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http.Headers;
-using System.Reflection;
 
 namespace Octokit.Tests.Integration
 {
@@ -13,7 +11,7 @@ namespace Octokit.Tests.Integration
             var githubUsername = Environment.GetEnvironmentVariable("OCTOKIT_GITHUBUSERNAME");
             UserName = githubUsername;
             Organization = Environment.GetEnvironmentVariable("OCTOKIT_GITHUBORGANIZATION");
-            
+
             var githubToken = Environment.GetEnvironmentVariable("OCTOKIT_OAUTHTOKEN");
 
             if (githubToken != null)
@@ -26,6 +24,17 @@ namespace Octokit.Tests.Integration
 
             return new Credentials(githubUsername, githubPassword);
         });
+
+        static readonly Lazy<Credentials> _oauthApplicationCredentials = new Lazy<Credentials>(() =>
+        {
+            var applicationClientId = ClientId;
+            var applicationClientSecret = ClientSecret;
+
+            if (applicationClientId == null || applicationClientSecret == null)
+                return null;
+
+            return new Credentials(applicationClientId, applicationClientSecret);
+        }); 
 
         static Helper()
         {
@@ -40,14 +49,43 @@ namespace Octokit.Tests.Integration
 
         public static Credentials Credentials { get { return _credentialsThunk.Value; }}
 
+        public static Credentials ApplicationCredentials { get { return _oauthApplicationCredentials.Value; } }
+
+        public static bool IsUsingToken
+        {
+            get
+            {
+                return !String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OCTOKIT_OAUTHTOKEN"));
+            }
+        }
+
+        public static bool IsPaidAccount
+        {
+            get
+            {
+                return !String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OCTOKIT_PRIVATEREPOSITORIES"));
+            }
+        }
+
+        public static string ClientId
+        {
+            get { return Environment.GetEnvironmentVariable("OCTOKIT_CLIENTID"); }
+        }
+
+        public static string ClientSecret
+        {
+            get { return Environment.GetEnvironmentVariable("OCTOKIT_CLIENTSECRET"); }
+        }
+
         public static void DeleteRepo(Repository repository)
         {
-            DeleteRepo(repository.Owner.Login, repository.Name);
+            if (repository != null)
+                DeleteRepo(repository.Owner.Login, repository.Name);
         }
-        
+
         public static void DeleteRepo(string owner, string name)
         {
-            var api = new GitHubClient(new ProductHeaderValue("OctokitTests")) { Credentials = Credentials };
+            var api = GetAuthenticatedClient();
             try
             {
                 api.Repository.Delete(owner, name).Wait(TimeSpan.FromSeconds(15));
@@ -70,6 +108,35 @@ namespace Octokit.Tests.Integration
                     "The file '" + fileName + "' was not found as an embedded resource in the assembly. Failing the test...");
             }
             return stream;
+        }
+
+        public static IGitHubClient GetAuthenticatedClient()
+        {
+            return new GitHubClient(new ProductHeaderValue("OctokitTests"))
+            {
+                Credentials = Credentials
+            };
+        }
+
+        public static GitHubClient GetAuthenticatedApplicationClient()
+        {
+            return new GitHubClient(new ProductHeaderValue("OctokitTests"))
+            {
+                Credentials = ApplicationCredentials
+            };
+        }
+
+        public static IGitHubClient GetAnonymousClient()
+        {
+            return new GitHubClient(new ProductHeaderValue("OctokitTests"));
+        }
+
+        public static IGitHubClient GetBadCredentialsClient()
+        {
+            return new GitHubClient(new ProductHeaderValue("OctokitTests"))
+            {
+                Credentials = new Credentials(Credentials.Login, "bad-password")
+            };
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 #if NET_45
 using System.Collections.Generic;
 #endif
-using System.Threading.Tasks;
-using System.Linq;
-using System.Collections.ObjectModel;
 
 namespace Octokit
 {
@@ -23,6 +23,8 @@ namespace Octokit
         public RepositoriesClient(IApiConnection apiConnection) : base(apiConnection)
         {
             CommitStatus = new CommitStatusClient(apiConnection);
+            Hooks = new RepositoryHooksClient(apiConnection);
+            Forks = new RepositoryForksClient(apiConnection);
             RepoCollaborators = new RepoCollaboratorsClient(apiConnection);
             Statistics = new StatisticsClient(apiConnection);
             Deployment = new DeploymentsClient(apiConnection);
@@ -30,6 +32,8 @@ namespace Octokit
             RepositoryComments = new RepositoryCommentsClient(apiConnection);
             Commits = new RepositoryCommitsClient(apiConnection);
             DeployKeys = new RepositoryDeployKeysClient(apiConnection);
+            Merging = new MergingClient(apiConnection);
+            Content = new RepositoryContentsClient(apiConnection);
         }
 
         /// <summary>
@@ -44,9 +48,7 @@ namespace Octokit
         public Task<Repository> Create(NewRepository newRepository)
         {
             Ensure.ArgumentNotNull(newRepository, "newRepository");
-            if (string.IsNullOrEmpty(newRepository.Name))
-                throw new ArgumentException("The new repository's name must not be null.");
-
+            
             return Create(ApiUrls.Repositories(), null, newRepository);
         }
 
@@ -85,6 +87,11 @@ namespace Octokit
                     errorMessage,
                     StringComparison.OrdinalIgnoreCase))
                 {
+                    if (string.IsNullOrEmpty(organizationLogin))
+                    {
+                        throw new RepositoryExistsException(newRepository.Name, e);
+                    }
+
                     var baseAddress = Connection.BaseAddress.Host != GitHubClient.GitHubApiUrl.Host
                         ? Connection.BaseAddress
                         : new Uri("https://github.com/");
@@ -93,6 +100,15 @@ namespace Octokit
                         newRepository.Name,
                         baseAddress, e);
                 }
+
+                if (String.Equals(
+                    "please upgrade your plan to create a new private repository.",
+                    errorMessage,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new PrivateRepositoryQuotaExceededException(e);
+                }
+
                 if (String.Equals(
                     "name can't be private. You are over your quota.",
                     errorMessage,
@@ -159,6 +175,41 @@ namespace Octokit
         }
 
         /// <summary>
+        /// Gets all public repositories.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/#list-all-public-repositories">API documentation</a> for more information.
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        public Task<IReadOnlyList<Repository>> GetAllPublic()
+        {
+            return ApiConnection.GetAll<Repository>(ApiUrls.AllPublicRepositories());
+        }
+
+        /// <summary>
+        /// Gets all public repositories since the integer ID of the last Repository that you've seen.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/#list-all-public-repositories">API documentation</a> for more information.
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <param name="request">Search parameters of the last repository seen</param>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        public Task<IReadOnlyList<Repository>> GetAllPublic(PublicRepositoryRequest request)
+        {
+            Ensure.ArgumentNotNull(request, "request");
+
+            var url = ApiUrls.AllPublicRepositories(request.Since);
+
+            return ApiConnection.GetAll<Repository>(url);
+        }
+
+        /// <summary>
         /// Gets all repositories owned by the current user.
         /// </summary>
         /// <remarks>
@@ -171,6 +222,24 @@ namespace Octokit
         public Task<IReadOnlyList<Repository>> GetAllForCurrent()
         {
             return ApiConnection.GetAll<Repository>(ApiUrls.Repositories());
+        }
+
+        /// <summary>
+        /// Gets all repositories owned by the current user.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="http://developer.github.com/v3/repos/#list-your-repositories">API documentation</a> for more information.
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <param name="request">Search parameters to filter results on</param>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        public Task<IReadOnlyList<Repository>> GetAllForCurrent(RepositoryRequest request)
+        {
+            Ensure.ArgumentNotNull(request, "request");
+
+            return ApiConnection.GetAll<Repository>(ApiUrls.Repositories(), request.ToParametersDictionary());
         }
 
         /// <summary>
@@ -206,45 +275,6 @@ namespace Octokit
         }
 
         /// <summary>
-        /// Gets the preferred README for the specified repository.
-        /// </summary>
-        /// <remarks>
-        /// See the <a href="http://developer.github.com/v3/repos/contents/#get-the-readme">API documentation</a> for more information.
-        /// </remarks>
-        /// <param name="owner">The owner of the repository</param>
-        /// <param name="name">The name of the repository</param>
-        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
-        /// <returns></returns>
-        public async Task<Readme> GetReadme(string owner, string name)
-        {
-            Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
-            Ensure.ArgumentNotNullOrEmptyString(name, "name");
-
-            var endpoint = "repos/{0}/{1}/readme".FormatUri(owner, name);
-            var readmeInfo = await ApiConnection.Get<ReadmeResponse>(endpoint, null).ConfigureAwait(false);
-            return new Readme(readmeInfo, ApiConnection);
-        }
-
-        /// <summary>
-        /// Gets the perferred README's HTML for the specified repository.
-        /// </summary>
-        /// <remarks>
-        /// See the <a href="http://developer.github.com/v3/repos/contents/#get-the-readme">API documentation</a> for more information.
-        /// </remarks>
-        /// <param name="owner">The owner of the repository</param>
-        /// <param name="name">The name of the repository</param>
-        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
-        /// <returns></returns>
-        public Task<string> GetReadmeHtml(string owner, string name)
-        {
-            Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
-            Ensure.ArgumentNotNullOrEmptyString(name, "name");
-
-            var endpoint = "repos/{0}/{1}/readme".FormatUri(owner, name);
-            return ApiConnection.GetHtml(endpoint, null);
-        }
-
-        /// <summary>
         /// A client for GitHub's Commit Status API.
         /// </summary>
         /// <remarks>
@@ -253,6 +283,18 @@ namespace Octokit
         /// that announced this feature.
         /// </remarks>
         public ICommitStatusClient CommitStatus { get; private set; }
+
+        /// <summary>
+        /// A client for GitHub's Repository Hooks API.
+        /// </summary>
+        /// <remarks>See <a href="http://developer.github.com/v3/repos/hooks/">Hooks API documentation</a> for more information.</remarks>
+        public IRepositoryHooksClient Hooks { get; private set; }
+
+        /// <summary>
+        /// A client for GitHub's Repository Forks API.
+        /// </summary>
+        /// <remarks>See <a href="http://developer.github.com/v3/repos/forks/">Forks API documentation</a> for more information.</remarks>        
+        public IRepositoryForksClient Forks { get; private set; }
 
         /// <summary>
         /// A client for GitHub's Repo Collaborators.
@@ -287,6 +329,14 @@ namespace Octokit
         public IRepositoryCommitsClient Commits { get; private set; }
 
         /// <summary>
+        /// Client for GitHub's Repository Merging API
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/merging/">Merging API documentation</a> for more details
+        ///</remarks>
+        public IMergingClient Merging { get; private set; }
+
+        /// <summary>
         /// Client for managing pull requests.
         /// </summary>
         /// <remarks>
@@ -309,6 +359,14 @@ namespace Octokit
         /// See the <a href="https://developer.github.com/v3/repos/keys/">Repository Deploy Keys API documentation</a> for more information.
         /// </remarks>
         public IRepositoryDeployKeysClient DeployKeys { get; private set; }
+
+        /// <summary>
+        /// Client for managing the contents of a repository.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="http://developer.github.com/v3/repos/contents/">Repository Contents API documentation</a> for more information.
+        /// </remarks>
+        public IRepositoryContentsClient Content { get; private set; }
 
         /// <summary>
         /// Gets all the branches for the specified repository.
@@ -339,7 +397,7 @@ namespace Octokit
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <returns>All contributors of the repository.</returns>
-        public Task<IReadOnlyList<User>> GetAllContributors(string owner, string name)
+        public Task<IReadOnlyList<RepositoryContributor>> GetAllContributors(string owner, string name)
         {
             return GetAllContributors(owner, name, false);
         }
@@ -354,7 +412,7 @@ namespace Octokit
         /// <param name="name">The name of the repository</param>
         /// <param name="includeAnonymous">True if anonymous contributors should be included in result; Otherwise false</param>
         /// <returns>All contributors of the repository.</returns>
-        public Task<IReadOnlyList<User>> GetAllContributors(string owner, string name, bool includeAnonymous)
+        public Task<IReadOnlyList<RepositoryContributor>> GetAllContributors(string owner, string name, bool includeAnonymous)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(name, "name");
@@ -363,7 +421,7 @@ namespace Octokit
             if (includeAnonymous)
                 parameters.Add("anon", "1");
 
-            return ApiConnection.GetAll<User>(ApiUrls.RepositoryContributors(owner, name), parameters);
+            return ApiConnection.GetAll<RepositoryContributor>(ApiUrls.RepositoryContributors(owner, name), parameters);
         }
 
         /// <summary>
@@ -375,18 +433,17 @@ namespace Octokit
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <returns>All languages used in the repository and the number of bytes of each language.</returns>
-        public Task<IReadOnlyList<RepositoryLanguage>> GetAllLanguages(string owner, string name)
+        public async Task<IReadOnlyList<RepositoryLanguage>> GetAllLanguages(string owner, string name)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(name, "name");
 
-            return ApiConnection
-                .Get<IDictionary<string, long>>(ApiUrls.RepositoryLanguages(owner, name))
-                .ContinueWith<IReadOnlyList<RepositoryLanguage>>(t => 
-                    new ReadOnlyCollection<RepositoryLanguage>(
-                        t.Result.Select(kvp => new RepositoryLanguage(kvp.Key, kvp.Value)).ToList()
-                    ),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
+            var data = await ApiConnection
+                .Get<Dictionary<string, long>>(ApiUrls.RepositoryLanguages(owner, name))
+                .ConfigureAwait(false);
+
+            return new ReadOnlyCollection<RepositoryLanguage>(
+                data.Select(kvp => new RepositoryLanguage(kvp.Key, kvp.Value)).ToList());
         }
 
         /// <summary>

@@ -1,8 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 #if NET_45
 using System.Collections.Generic;
 #endif
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 
 namespace Octokit
 {
@@ -37,6 +37,14 @@ namespace Octokit
         /// See the <a href="https://developer.github.com/v3/repos/keys/">Repository Deploy Keys API documentation</a> for more information.
         /// </remarks>
         IRepositoryDeployKeysClient DeployKeys { get; }
+
+        /// <summary>
+        /// Client for managing the contents of a repository.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="http://developer.github.com/v3/repos/contents/">Repository Contents API documentation</a> for more information.
+        /// </remarks>
+        IRepositoryContentsClient Content { get; }
 
         /// <summary>
         /// Creates a new repository for the current user.
@@ -85,7 +93,35 @@ namespace Octokit
         /// <returns>A <see cref="Repository"/></returns>
         [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Get")]
         Task<Repository> Get(string owner, string name);
-        
+
+        /// <summary>
+        /// Gets all public repositories.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/#list-all-public-repositories">API documentation</a> for more information.
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Makes a network request")]
+        Task<IReadOnlyList<Repository>> GetAllPublic();
+
+
+        /// <summary>
+        /// Gets all public repositories since the integer ID of the last Repository that you've seen.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/#list-all-public-repositories">API documentation</a> for more information.
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <param name="request">Search parameters of the last repository seen</param>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        Task<IReadOnlyList<Repository>> GetAllPublic(PublicRepositoryRequest request);
+
         /// <summary>
         /// Gets all repositories owned by the current user.
         /// </summary>
@@ -99,7 +135,22 @@ namespace Octokit
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
             Justification = "Makes a network request")]
         Task<IReadOnlyList<Repository>> GetAllForCurrent();
-        
+
+        /// <summary>
+        /// Gets all repositories owned by the current user.
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="http://developer.github.com/v3/repos/#list-your-repositories">API documentation</a> for more information.
+        /// The default page size on GitHub.com is 30.
+        /// </remarks>
+        /// <param name="request">Search parameters to filter results on</param>
+        /// <exception cref="AuthorizationException">Thrown if the client is not authenticated.</exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="IReadOnlyPagedCollection{Repository}"/> of <see cref="Repository"/>.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "Makes a network request")]
+        Task<IReadOnlyList<Repository>> GetAllForCurrent(RepositoryRequest request);
+
         /// <summary>
         /// Gets all repositories owned by the specified user.
         /// </summary>
@@ -127,30 +178,6 @@ namespace Octokit
         Task<IReadOnlyList<Repository>> GetAllForOrg(string organization);
 
         /// <summary>
-        /// Gets the preferred README for the specified repository.
-        /// </summary>
-        /// <remarks>
-        /// See the <a href="http://developer.github.com/v3/repos/contents/#get-the-readme">API documentation</a> for more information.
-        /// </remarks>
-        /// <param name="owner">The owner of the repository</param>
-        /// <param name="name">The name of the repository</param>
-        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
-        /// <returns></returns>
-        Task<Readme> GetReadme(string owner, string name);
-
-        /// <summary>
-        /// Gets the perferred README's HTML for the specified repository.
-        /// </summary>
-        /// <remarks>
-        /// See the <a href="http://developer.github.com/v3/repos/contents/#get-the-readme">API documentation</a> for more information.
-        /// </remarks>
-        /// <param name="owner">The owner of the repository</param>
-        /// <param name="name">The name of the repository</param>
-        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
-        /// <returns></returns>
-        Task<string> GetReadmeHtml(string owner, string name);
-
-        /// <summary>
         /// A client for GitHub's Commit Status API.
         /// </summary>
         /// <remarks>
@@ -159,6 +186,18 @@ namespace Octokit
         /// that announced this feature.
         /// </remarks>
         ICommitStatusClient CommitStatus { get; }
+
+        /// <summary>
+        /// A client for GitHub's Repository Hooks API.
+        /// </summary>
+        /// <remarks>See <a href="http://developer.github.com/v3/repos/hooks/">Hooks API documentation</a> for more information.</remarks>
+        IRepositoryHooksClient Hooks { get; }
+
+        /// <summary>
+        /// A client for GitHub's Repository Forks API.
+        /// </summary>
+        /// <remarks>See <a href="http://developer.github.com/v3/repos/forks/">Forks API documentation</a> for more information.</remarks>        
+        IRepositoryForksClient Forks { get; }
 
         /// <summary>
         /// A client for GitHub's Repo Collaborators.
@@ -193,6 +232,14 @@ namespace Octokit
         IRepositoryCommitsClient Commits { get; }
 
         /// <summary>
+        /// Client for GitHub's Repository Merging API
+        /// </summary>
+        /// <remarks>
+        /// See the <a href="https://developer.github.com/v3/repos/merging/">Merging API documentation</a> for more details
+        ///</remarks>
+        IMergingClient Merging { get; }
+
+        /// <summary>
         /// Gets all the branches for the specified repository.
         /// </summary>
         /// <remarks>
@@ -213,7 +260,7 @@ namespace Octokit
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <returns>All contributors of the repository.</returns>
-        Task<IReadOnlyList<User>> GetAllContributors(string owner, string name);
+        Task<IReadOnlyList<RepositoryContributor>> GetAllContributors(string owner, string name);
 
         /// <summary>
         /// Gets all contributors for the specified repository. With the option to include anonymous contributors.
@@ -225,7 +272,7 @@ namespace Octokit
         /// <param name="name">The name of the repository</param>
         /// <param name="includeAnonymous">True if anonymous contributors should be included in result; Otherwise false</param>
         /// <returns>All contributors of the repository.</returns>
-        Task<IReadOnlyList<User>> GetAllContributors(string owner, string name, bool includeAnonymous);
+        Task<IReadOnlyList<RepositoryContributor>> GetAllContributors(string owner, string name, bool includeAnonymous);
 
         /// <summary>
         /// Gets all languages for the specified repository.

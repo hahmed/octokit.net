@@ -3,6 +3,12 @@ using System.Threading.Tasks;
 
 namespace Octokit
 {
+    /// <summary>
+    /// A client for GitHub's Pull Request Review Comments API.
+    /// </summary>
+    /// <remarks>
+    /// See the <a href="https://developer.github.com/v3/pulls/comments/">Review Comments API documentation</a> for more information.
+    /// </remarks>
     public interface IPullRequestReviewCommentsClient
     {
         /// <summary>
@@ -22,7 +28,7 @@ namespace Octokit
         /// <param name="owner">The owner of the repository</param>
         /// <param name="name">The name of the repository</param>
         /// <returns>The list of <see cref="PullRequestReviewComment"/>s for the specified repository</returns>
-        Task<IReadOnlyList<PullRequestReviewComment>> GetForRepository(string owner, string name);
+        Task<IReadOnlyList<PullRequestReviewComment>> GetAllForRepository(string owner, string name);
 
         /// <summary>
         /// Gets a list of the pull request review comments in a specified repository.
@@ -32,7 +38,7 @@ namespace Octokit
         /// <param name="name">The name of the repository</param>
         /// <param name="request">The sorting <see cref="PullRequestReviewCommentRequest">parameters</see></param>
         /// <returns>The list of <see cref="PullRequestReviewComment"/>s for the specified repository</returns>
-        Task<IReadOnlyList<PullRequestReviewComment>> GetForRepository(string owner, string name, PullRequestReviewCommentRequest request);
+        Task<IReadOnlyList<PullRequestReviewComment>> GetAllForRepository(string owner, string name, PullRequestReviewCommentRequest request);
 
         /// <summary>
         /// Gets a single pull request review comment by number.

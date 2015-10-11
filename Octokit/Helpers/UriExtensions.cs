@@ -4,8 +4,17 @@ using System.Linq;
 
 namespace Octokit
 {
+    /// <summary>
+    /// Extensions for working with Uris
+    /// </summary>
     public static class UriExtensions
     {
+        /// <summary>
+        /// Merge a dictionary of valeus with an existing <see cref="Uri"/>
+        /// </summary>
+        /// <param name="uri">Original request Uri</param>
+        /// <param name="parameters">Collection of key-value pairs</param>
+        /// <returns>Updated request Uri</returns>
         public static Uri ApplyParameters(this Uri uri, IDictionary<string, string> parameters)
         {
             Ensure.ArgumentNotNull(uri, "uri");
@@ -44,11 +53,7 @@ namespace Octokit
                 }
             }
 
-            Func<string, string, string> mapValueFunc = (key, value) =>
-            {
-                if (key == "q") return value;
-                return Uri.EscapeDataString(value);
-            };
+            Func<string, string, string> mapValueFunc = (key, value) => key == "q" ? value : Uri.EscapeDataString(value);
 
             string query = String.Join("&", p.Select(kvp => kvp.Key + "=" + mapValueFunc(kvp.Key, kvp.Value)));
             if (uri.IsAbsoluteUri)

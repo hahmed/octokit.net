@@ -17,7 +17,7 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new IssuesLabelsClient(connection);
 
-                await client.GetForIssue("fake", "repo", 42);
+                await client.GetAllForIssue("fake", "repo", 42);
 
                 connection.Received().GetAll<Label>(Arg.Is<Uri>(u => u.ToString() == "repos/fake/repo/issues/42/labels"));
             }
@@ -27,9 +27,9 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get(null, "name", "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", null, "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", "name", null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get(null, "name", "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", null, "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", "name", null));
             }
         }
 
@@ -41,7 +41,7 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new IssuesLabelsClient(connection);
 
-                await client.GetForRepository("fake", "repo");
+                await client.GetAllForRepository("fake", "repo");
 
                 connection.Received().GetAll<Label>(Arg.Is<Uri>(u => u.ToString() == "repos/fake/repo/labels"));
             }
@@ -51,9 +51,9 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get(null, "name", "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", null, "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", "name", null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get(null, "name", "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", null, "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", "name", null));
             }
         }
 
@@ -76,8 +76,8 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get(null, "name", "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Get("owner", null, "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get(null, "name", "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Get("owner", null, "label"));
             }
         }
 
@@ -101,9 +101,9 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.AddToIssue(null, "name", 42, labels));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.AddToIssue("owner", null, 42, labels));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.AddToIssue("owner", "name", 42, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.AddToIssue(null, "name", 42, labels));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.AddToIssue("owner", null, 42, labels));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.AddToIssue("owner", "name", 42, null));
             }
         }
 
@@ -125,9 +125,9 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.RemoveFromIssue(null, "name", 42, "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.RemoveFromIssue("owner", null, 42, "label"));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.RemoveFromIssue("owner", "name", 42, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.RemoveFromIssue(null, "name", 42, "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.RemoveFromIssue("owner", null, 42, "label"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.RemoveFromIssue("owner", "name", 42, null));
             }
         }
 
@@ -151,9 +151,9 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.ReplaceAllForIssue(null, "name", 42, labels));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.ReplaceAllForIssue("owner", null, 42, labels));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.ReplaceAllForIssue("owner", "name", 42, null));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.ReplaceAllForIssue(null, "name", 42, labels));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.ReplaceAllForIssue("owner", null, 42, labels));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.ReplaceAllForIssue("owner", "name", 42, null));
             }
         }
 
@@ -175,8 +175,8 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.RemoveAllFromIssue(null, "name", 42));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.RemoveAllFromIssue("owner", null, 42));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.RemoveAllFromIssue(null, "name", 42));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.RemoveAllFromIssue("owner", null, 42));
             }
         }
 
@@ -188,7 +188,7 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new IssuesLabelsClient(connection);
 
-                client.GetForMilestone("fake", "repo", 42);
+                client.GetAllForMilestone("fake", "repo", 42);
 
                 connection.Received().GetAll<Label>(Arg.Is<Uri>(u => u.ToString() == "repos/fake/repo/milestones/42/labels"));
             }
@@ -198,8 +198,8 @@ namespace Octokit.Tests.Clients
             {
                 var client = new IssuesLabelsClient(Substitute.For<IApiConnection>());
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetForMilestone(null, "name", 42));
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.GetForMilestone("owner", null, 42));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllForMilestone(null, "name", 42));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllForMilestone("owner", null, 42));
             }
         }
     }

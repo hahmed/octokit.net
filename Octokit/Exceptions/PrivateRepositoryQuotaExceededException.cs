@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Octokit
 {
@@ -33,12 +29,24 @@ namespace Octokit
             get
             {
                 // TODO: Would be nice to show the actual numbers, but that requires another request.
-                return "You are currently at your limit of private repositories. Either delete a private repository "
-                    + "you no longer use or upgrade your account to a plan that allows for more private repositories.";
+                return "You are currently at your limit of private repositories. Either delete a private repository you no "
+                    + "longer use (https://help.github.com/articles/deleting-a-repository/) or upgrade your account to a plan "
+                    + "that allows for more private repositories (https://help.github.com/articles/what-plan-should-i-choose/).";
             }
         }
 
 #if !NETFX_CORE
+        /// <summary>
+        /// Constructs an instance of PrivateRepositoryQuotaExceededException
+        /// </summary>
+        /// <param name="info">
+        /// The <see cref="SerializationInfo"/> that holds the
+        /// serialized object data about the exception being thrown.
+        /// </param>
+        /// <param name="context">
+        /// The <see cref="StreamingContext"/> that contains
+        /// contextual information about the source or destination.
+        /// </param>
         protected PrivateRepositoryQuotaExceededException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

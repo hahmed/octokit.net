@@ -1,21 +1,19 @@
 ﻿using System;
-#if !PORTABLE
-using System.Collections.Concurrent;
-#endif
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Octokit.Internal;
+#if !PORTABLE
+using System.Collections.Concurrent;
+#endif
 
 namespace Octokit
 {
     /// <summary>
     /// Base class for classes which represent query string parameters to certain API endpoints.
     /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public abstract class RequestParameters
     {
 #if PORTABLE
@@ -25,6 +23,10 @@ namespace Octokit
         static readonly ConcurrentDictionary<Type, List<PropertyParameter>> _propertiesMap =
             new ConcurrentDictionary<Type, List<PropertyParameter>>();
 #endif
+        /// <summary>
+        /// Converts the derived object into a dictionary that can be used to supply query string parameters.
+        /// </summary>
+        /// <returns></returns>
         public virtual IDictionary<string, string> ToParametersDictionary()
         {
             var map = _propertiesMap.GetOrAdd(GetType(), GetPropertyParametersForType);
@@ -79,6 +81,13 @@ namespace Octokit
                         ? attributeValue ?? value.ToString().ToLowerInvariant()
                         : value.ToString().ToLowerInvariant();
                 };
+            }
+
+            if (typeof(bool).IsAssignableFrom(propertyType))
+            {
+                // GitHub does not recognize title-case boolean values as arguments.
+                // We need to convert them to lowercase.
+                return (prop, value) => value != null ? value.ToString().ToLowerInvariant() : null;
             }
 
             return (prop, value) => value != null

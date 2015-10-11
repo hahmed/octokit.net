@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Octokit;
 using Octokit.Tests.Integration;
@@ -9,15 +7,12 @@ using Xunit;
 
 public class FollowersClientTests : IDisposable
 {
-    readonly GitHubClient _github;
+    readonly IGitHubClient _github;
     readonly User _currentUser;
 
     public FollowersClientTests()
     {
-        _github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-        {
-            Credentials = Helper.Credentials
-        };
+        _github = Helper.GetAuthenticatedClient();
         _currentUser = _github.User.Current().Result;
     }
 
@@ -26,7 +21,7 @@ public class FollowersClientTests : IDisposable
     {
         await _github.User.Followers.Follow("alfhenrik");
 
-        var following = await _github.User.Followers.GetFollowingForCurrent();
+        var following = await _github.User.Followers.GetAllFollowingForCurrent();
 
         Assert.NotNull(following);
         Assert.True(following.Any(f => f.Login == "alfhenrik"));
@@ -35,7 +30,7 @@ public class FollowersClientTests : IDisposable
     [IntegrationTest]
     public async Task ReturnsUsersTheUserIsFollowing()
     {
-        var following = await _github.User.Followers.GetFollowing("alfhenrik");
+        var following = await _github.User.Followers.GetAllFollowing("alfhenrik");
 
         Assert.NotNull(following);
         Assert.NotEmpty(following);
@@ -74,7 +69,7 @@ public class FollowersClientTests : IDisposable
     public async Task FollowUserNotBeingFollowedByTheUser()
     {
         var result = await _github.User.Followers.Follow("alfhenrik");
-        var following = await _github.User.Followers.GetFollowingForCurrent();
+        var following = await _github.User.Followers.GetAllFollowingForCurrent();
 
         Assert.True(result);
         Assert.NotEmpty(following);

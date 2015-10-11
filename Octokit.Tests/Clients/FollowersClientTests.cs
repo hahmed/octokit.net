@@ -56,13 +56,13 @@ namespace Octokit.Tests.Clients
             }
 
             [Fact]
-            public void EnsureNonNullArguments()
+            public async Task EnsureNonNullArguments()
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                Assert.Throws<ArgumentNullException>(() => client.GetAll(null));
-                Assert.Throws<ArgumentException>(() => client.GetAll(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAll(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAll(""));
             }
         }
 
@@ -74,7 +74,7 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                client.GetFollowingForCurrent();
+                client.GetAllFollowingForCurrent();
 
                 connection.Received().GetAll<User>(Arg.Is<Uri>(u => u.ToString() == "user/following"));
             }
@@ -88,19 +88,19 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                client.GetFollowing("alfhenrik");
+                client.GetAllFollowing("alfhenrik");
 
                 connection.Received().GetAll<User>(Arg.Is<Uri>(u => u.ToString() == "users/alfhenrik/following"));
             }
 
             [Fact]
-            public void EnsuresNonNullArguments()
+            public async Task EnsuresNonNullArguments()
             {
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                Assert.Throws<ArgumentNullException>(() => client.GetFollowing(null));
-                Assert.Throws<ArgumentException>(() => client.GetFollowing(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.GetAllFollowing(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.GetAllFollowing(""));
             }
         }
 
@@ -111,8 +111,8 @@ namespace Octokit.Tests.Clients
             [InlineData(HttpStatusCode.NotFound, false)]
             public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = status });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "user/following/alfhenrik"),
                     null, null).Returns(response);
@@ -128,8 +128,8 @@ namespace Octokit.Tests.Clients
             [Fact]
             public async Task ThrowsExceptionForInvalidStatusCode()
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "user/following/alfhenrik"),
                     null, null).Returns(response);
@@ -137,7 +137,7 @@ namespace Octokit.Tests.Clients
                 apiConnection.Connection.Returns(connection);
                 var client = new FollowersClient(apiConnection);
 
-                await AssertEx.Throws<ApiException>(() => client.IsFollowingForCurrent("alfhenrik"));
+                await Assert.ThrowsAsync<ApiException>(() => client.IsFollowingForCurrent("alfhenrik"));
             }
 
             [Fact]
@@ -146,8 +146,8 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                await AssertEx.Throws<ArgumentNullException>(() => client.IsFollowingForCurrent(null));
-                await AssertEx.Throws<ArgumentException>(() => client.IsFollowingForCurrent(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.IsFollowingForCurrent(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.IsFollowingForCurrent(""));
             }
         }
 
@@ -158,8 +158,8 @@ namespace Octokit.Tests.Clients
             [InlineData(HttpStatusCode.NotFound, false)]
             public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = status });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "users/alfhenrik/following/alfhenrik-test"),
                     null, null).Returns(response);
@@ -175,8 +175,8 @@ namespace Octokit.Tests.Clients
             [Fact]
             public async Task ThrowsExceptionForInvalidStatusCode()
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Get<object>(Arg.Is<Uri>(u => u.ToString() == "users/alfhenrik/following/alfhenrik-test"),
                     null, null).Returns(response);
@@ -184,7 +184,7 @@ namespace Octokit.Tests.Clients
                 apiConnection.Connection.Returns(connection);
                 var client = new FollowersClient(apiConnection);
 
-                await AssertEx.Throws<ApiException>(() => client.IsFollowing("alfhenrik", "alfhenrik-test"));
+                await Assert.ThrowsAsync<ApiException>(() => client.IsFollowing("alfhenrik", "alfhenrik-test"));
             }
 
             [Fact]
@@ -193,10 +193,10 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                await AssertEx.Throws<ArgumentNullException>(() => client.IsFollowing(null,  "alfhenrik-test"));
-                await AssertEx.Throws<ArgumentNullException>(() => client.IsFollowing("alfhenrik", null));
-                await AssertEx.Throws<ArgumentException>(() => client.IsFollowing("", "alfhenrik-text"));
-                await AssertEx.Throws<ArgumentException>(() => client.IsFollowing("alfhenrik", ""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.IsFollowing(null, "alfhenrik-test"));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.IsFollowing("alfhenrik", null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.IsFollowing("", "alfhenrik-text"));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.IsFollowing("alfhenrik", ""));
             }
 
         }
@@ -207,8 +207,8 @@ namespace Octokit.Tests.Clients
             [InlineData(HttpStatusCode.NoContent, true)]
             public async Task RequestsCorrectValueForStatusCode(HttpStatusCode status, bool expected)
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = status });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(status , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Put<object>(Arg.Is<Uri>(u => u.ToString() == "user/following/alfhenrik"),
                     Args.Object).Returns(response);
@@ -224,8 +224,8 @@ namespace Octokit.Tests.Clients
             [Fact]
             public async Task ThrowsExceptionForInvalidStatusCode()
             {
-                var response = Task.Factory.StartNew<IResponse<object>>(() =>
-                    new ApiResponse<object> { StatusCode = HttpStatusCode.Conflict });
+                var response = Task.Factory.StartNew<IApiResponse<object>>(() =>
+                    new ApiResponse<object>(new Response(HttpStatusCode.Conflict , null, new Dictionary<string, string>(), "application/json")));
                 var connection = Substitute.For<IConnection>();
                 connection.Put<object>(Arg.Is<Uri>(u => u.ToString() == "user/following/alfhenrik"),
                     new { }).Returns(response);
@@ -233,7 +233,7 @@ namespace Octokit.Tests.Clients
                 apiConnection.Connection.Returns(connection);
                 var client = new FollowersClient(apiConnection);
 
-                await AssertEx.Throws<ApiException>(() => client.Follow("alfhenrik"));
+                await Assert.ThrowsAsync<ApiException>(() => client.Follow("alfhenrik"));
             }
 
             [Fact]
@@ -242,8 +242,8 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Follow(null));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Follow(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Follow(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Follow(""));
             }
         }
 
@@ -266,8 +266,8 @@ namespace Octokit.Tests.Clients
                 var connection = Substitute.For<IApiConnection>();
                 var client = new FollowersClient(connection);
 
-                await AssertEx.Throws<ArgumentNullException>(async () => await client.Unfollow(null));
-                await AssertEx.Throws<ArgumentException>(async () => await client.Unfollow(""));
+                await Assert.ThrowsAsync<ArgumentNullException>(() => client.Unfollow(null));
+                await Assert.ThrowsAsync<ArgumentException>(() => client.Unfollow(""));
             }
         }
     }

@@ -1,9 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Octokit
 {
+    /// <summary>
+    /// A client for GitHub's Repository Statistics API.
+    /// </summary>
+    /// <remarks>
+    /// See the <a href="https://developer.github.com/v3/repos/statistics/">Repository Statistics API documentation</a> for more information.
+    /// </remarks>
     public class StatisticsClient : ApiClient, IStatisticsClient
     {
         /// <summary>
@@ -20,7 +27,7 @@ namespace Octokit
         /// <param name="owner">The owner of the repository</param>
         /// <param name="repositoryName">The name of the repository</param>
         /// <returns>A list of <see cref="Contributor"/></returns>
-        public Task<IEnumerable<Contributor>> GetContributors(string owner, string repositoryName)
+        public Task<IReadOnlyList<Contributor>> GetContributors(string owner, string repositoryName)
         {
             return GetContributors(owner, repositoryName, CancellationToken.None);
         }
@@ -32,13 +39,13 @@ namespace Octokit
         /// <param name="repositoryName">The name of the repository</param>
         /// <param name="cancellationToken">A token used to cancel this potentially long running request</param>
         /// <returns>A list of <see cref="Contributor"/></returns>
-        public async Task<IEnumerable<Contributor>> GetContributors(string owner, string repositoryName, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<Contributor>> GetContributors(string owner, string repositoryName, CancellationToken cancellationToken)
         {
             Ensure.ArgumentNotNullOrEmptyString(owner, "owner");
             Ensure.ArgumentNotNullOrEmptyString(repositoryName, "repositoryName");
 
             var endpoint = "/repos/{0}/{1}/stats/contributors".FormatUri(owner, repositoryName);
-            return await ApiConnection.GetQueuedOperation<IEnumerable<Contributor>>(endpoint, cancellationToken);
+            return await ApiConnection.GetQueuedOperation<Contributor>(endpoint, cancellationToken);
         }
 
         /// <summary>
@@ -65,7 +72,7 @@ namespace Octokit
             Ensure.ArgumentNotNullOrEmptyString(repositoryName, "repositoryName");
 
             var endpoint = "/repos/{0}/{1}/stats/commit_activity".FormatUri(owner, repositoryName);
-            var activity = await ApiConnection.GetQueuedOperation<IEnumerable<WeeklyCommitActivity>>(endpoint,cancellationToken);
+            var activity = await ApiConnection.GetQueuedOperation<WeeklyCommitActivity>(endpoint,cancellationToken);
             return new CommitActivity(activity);
         }
 
@@ -93,7 +100,7 @@ namespace Octokit
             Ensure.ArgumentNotNullOrEmptyString(repositoryName, "repositoryName");
 
             var endpoint = "/repos/{0}/{1}/stats/code_frequency".FormatUri(owner, repositoryName);
-            var rawFrequencies = await ApiConnection.GetQueuedOperation<IEnumerable<long[]>>(endpoint,cancellationToken);
+            var rawFrequencies = await ApiConnection.GetQueuedOperation<long[]>(endpoint,cancellationToken);
             return new CodeFrequency(rawFrequencies);
         }
 
@@ -121,7 +128,8 @@ namespace Octokit
             Ensure.ArgumentNotNullOrEmptyString(repositoryName, "repositoryName");
 
             var endpoint = "/repos/{0}/{1}/stats/participation".FormatUri(owner, repositoryName);
-            return await ApiConnection.GetQueuedOperation<Participation>(endpoint,cancellationToken);
+            var result = await ApiConnection.GetQueuedOperation<Participation>(endpoint,cancellationToken);
+            return result.FirstOrDefault();
         }
 
         /// <summary>
@@ -148,7 +156,7 @@ namespace Octokit
             Ensure.ArgumentNotNullOrEmptyString(repositoryName, "repositoryName");
 
             var endpoint = "/repos/{0}/{1}/stats/punch_card".FormatUri(owner, repositoryName);
-            var punchCardData = await ApiConnection.GetQueuedOperation<IEnumerable<int[]>>(endpoint, cancellationToken);
+            var punchCardData = await ApiConnection.GetQueuedOperation<int[]>(endpoint, cancellationToken);
             return new PunchCard(punchCardData);
         }
     }

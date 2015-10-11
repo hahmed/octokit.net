@@ -1,7 +1,7 @@
 ﻿#if NET_45
+using System.Threading.Tasks;
 using System.Collections.Generic;
 #endif
-using System.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Octokit
@@ -51,7 +51,7 @@ namespace Octokit
         /// <param name="data">A description of the release to create</param>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The created <see cref="Release"/>.</returns>
-        Task<Release> Create(string owner, string name, ReleaseUpdate data);
+        Task<Release> Create(string owner, string name, NewRelease data);
 
         /// <summary>
         /// Edits an existing <see cref="Release"/> for the specified repository.
@@ -91,7 +91,7 @@ namespace Octokit
         /// <param name="id">The id of the <see cref="Release"/>.</param>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The list of <see cref="ReleaseAsset"/> for the specified release of the specified repository.</returns>
-        Task<IReadOnlyList<ReleaseAsset>> GetAssets(string owner, string name, int id);
+        Task<IReadOnlyList<ReleaseAsset>> GetAllAssets(string owner, string name, int id);
 
         /// <summary>
         /// Uploads a <see cref="ReleaseAsset"/> for the specified release.

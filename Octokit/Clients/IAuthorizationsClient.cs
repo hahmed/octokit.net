@@ -1,8 +1,8 @@
-﻿#if NET_45
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
+#if NET_45
 using System.Collections.Generic;
 #endif
-using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 
 namespace Octokit
 {
@@ -48,6 +48,56 @@ namespace Octokit
         Task<Authorization> Get(int id);
 
         /// <summary>
+        /// Creates a new authorization for the specified OAuth application if an authorization for that application
+        /// doesn’t already exist for the user; otherwise, it fails.
+        /// </summary>
+        /// <remarks>
+        /// This method requires authentication.
+        /// See the <a href="http://developer.github.com/v3/oauth/#get-or-create-an-authorization-for-a-specific-app">API documentation</a> for more information.
+        /// </remarks>
+        /// <param name="clientId">Client ID of the OAuth application for the token</param>
+        /// <param name="clientSecret">The client secret</param>
+        /// <param name="newAuthorization">Describes the new authorization to create</param>
+        /// <exception cref="AuthorizationException">
+        /// Thrown when the current user does not have permission to make this request.
+        /// </exception>
+        /// <exception cref="TwoFactorRequiredException">
+        /// Thrown when the current account has two-factor authentication enabled and an authentication code is required.
+        /// </exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>The created <see cref="Authorization"/>.</returns>
+        Task<ApplicationAuthorization> Create(
+            string clientId,
+            string clientSecret,
+            NewAuthorization newAuthorization);
+
+        /// <summary>
+        /// Creates a new authorization for the specified OAuth application if an authorization for that application
+        /// doesn’t already exist for the user; otherwise, it fails.
+        /// </summary>
+        /// <remarks>
+        /// This method requires authentication.
+        /// See the <a href="http://developer.github.com/v3/oauth/#get-or-create-an-authorization-for-a-specific-app">API documentation</a> for more information.
+        /// </remarks>
+        /// <param name="clientId">Client ID of the OAuth application for the token</param>
+        /// <param name="clientSecret">The client secret</param>
+        /// <param name="twoFactorAuthenticationCode">The two-factor authentication code in response to the current user's previous challenge</param>
+        /// <param name="newAuthorization">Describes the new authorization to create</param>
+        /// <exception cref="AuthorizationException">
+        /// Thrown when the current user does not have permission to make this request.
+        /// </exception>
+        /// <exception cref="TwoFactorRequiredException">
+        /// Thrown when the current account has two-factor authentication enabled and an authentication code is required.
+        /// </exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>The created <see cref="Authorization"/>.</returns>
+        Task<ApplicationAuthorization> Create(
+            string clientId,
+            string clientSecret,
+            NewAuthorization newAuthorization,
+            string twoFactorAuthenticationCode);
+        
+        /// <summary>
         /// Creates a new authorization for the specified OAuth application if an authorization for that application doesn’t already 
         /// exist for the user; otherwise, returns the user’s existing authorization for that application.
         /// </summary>
@@ -66,7 +116,7 @@ namespace Octokit
         /// </exception>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The created <see cref="Authorization"/>.</returns>
-        Task<Authorization> GetOrCreateApplicationAuthentication(
+        Task<ApplicationAuthorization> GetOrCreateApplicationAuthentication(
             string clientId,
             string clientSecret,
             NewAuthorization newAuthorization);
@@ -91,26 +141,58 @@ namespace Octokit
         /// </exception>
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>The created <see cref="Authorization"/>.</returns>
-        Task<Authorization> GetOrCreateApplicationAuthentication(
+        Task<ApplicationAuthorization> GetOrCreateApplicationAuthentication(
             string clientId,
             string clientSecret,
             NewAuthorization newAuthorization,
             string twoFactorAuthenticationCode);
-        
+
         /// <summary>
-        /// Creates a new <see cref="Authorization"/>.
+        /// Checks the validity of an OAuth token without running afoul of normal rate limits for failed login attempts.
         /// </summary>
         /// <remarks>
         /// This method requires authentication.
-        /// See the <a href="http://developer.github.com/v3/oauth/#create-a-new-authorization">API documentation</a> for more information.
+        /// See the <a href="https://developer.github.com/v3/oauth_authorizations/#check-an-authorization">API documentation</a> for more information.
         /// </remarks>
-        /// <param name="newAuthorization">Describes the new authorization to create</param>
-        /// <exception cref="AuthorizationException">
-        /// Thrown when the current user does not have permission to make the request.
-        /// </exception>
-        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
-        /// <returns>The created <see cref="Authorization"/>.</returns>
-        Task<Authorization> Create(NewAuthorization newAuthorization);
+        /// <param name="clientId">Client ID of the OAuth application for the token</param>
+        /// <param name="accessToken">The OAuth token to check</param>
+        /// <returns>The valid <see cref="ApplicationAuthorization"/>.</returns>
+        Task<ApplicationAuthorization> CheckApplicationAuthentication(string clientId, string accessToken);
+
+        /// <summary>
+        /// Resets a valid OAuth token for an OAuth application without end user involvment.
+        /// </summary>
+        /// <remarks>
+        /// This method requires authentication.
+        /// See the <a href="https://developer.github.com/v3/oauth_authorizations/#reset-an-authorization">API documentation</a> for more information.
+        /// </remarks>
+        /// <param name="clientId">ClientID of the OAuth application for the token</param>
+        /// <param name="accessToken">The OAuth token to reset</param>
+        /// <returns>The valid <see cref="ApplicationAuthorization"/> with a new OAuth token</returns>
+        Task<ApplicationAuthorization> ResetApplicationAuthentication(string clientId, string accessToken);
+
+        /// <summary>
+        /// Revokes a single OAuth token for an OAuth application.
+        /// </summary>
+        /// <remarks>
+        /// This method requires authentication.
+        /// See the <a href="https://developer.github.com/v3/oauth_authorizations/#revoke-an-authorization-for-an-application">API documentation for more information.</a>
+        /// </remarks>
+        /// <param name="clientId">ClientID of the OAuth application for the token</param>
+        /// <param name="accessToken">The OAuth token to revoke</param>
+        /// <returns>A <see cref="Task"/> for the request's execution.</returns>
+        Task RevokeApplicationAuthentication(string clientId, string accessToken);
+
+        /// <summary>
+        /// Revokes every OAuth token for an OAuth application.
+        /// </summary>
+        /// <remarks>
+        /// This method requires authentication.
+        /// See the <a href="https://developer.github.com/v3/oauth_authorizations/#revoke-all-authorizations-for-an-application">API documentation for more information.</a>
+        /// </remarks>
+        /// <param name="clientId">ClientID of the OAuth application for the token</param>
+        /// <returns>A <see cref="Task"/> for the request's execution.</returns>
+        Task RevokeAllApplicationAuthentications(string clientId);
 
         /// <summary>
         /// Updates the specified <see cref="Authorization"/>.
@@ -144,5 +226,22 @@ namespace Octokit
         /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
         /// <returns>A <see cref="Task"/> for the request's execution.</returns>
         Task Delete(int id);
+
+        /// <summary>
+        /// Deletes the specified <see cref="Authorization"/>.
+        /// </summary>
+        /// <remarks>
+        /// This method requires authentication.
+        /// See the <a href="http://developer.github.com/v3/oauth/#delete-an-authorization">API 
+        /// documentation</a> for more details.
+        /// </remarks>
+        /// <param name="id">The system-wide ID of the authorization to delete</param>
+        /// <param name="twoFactorAuthenticationCode">Two factor authorization code</param>
+        /// <exception cref="AuthorizationException">
+        /// Thrown when the current user does not have permission to make the request.
+        /// </exception>
+        /// <exception cref="ApiException">Thrown when a general API error occurs.</exception>
+        /// <returns>A <see cref="Task"/> for the request's execution.</returns>
+        Task Delete(int id, string twoFactorAuthenticationCode);
     }
 }

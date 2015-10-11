@@ -46,8 +46,17 @@ namespace Octokit.Reactive
         /// for more information.
         /// </remarks>
         /// <param name="org">The login for the organization</param>
-        /// <param name="filter">The filter expression to use</param>
+        /// <param name="filter">The members filter, <see cref="OrganizationMembersFilter"/> </param>
         /// <returns></returns>
+        IObservable<User> GetAll(string org, OrganizationMembersFilter filter);
+
+        /// <summary>
+        /// Obsolete, <see cref="GetAll(string,OrganizationMembersFilter)"/>
+        /// </summary>
+        /// <param name="org">The login for the organization</param>
+        /// <param name="filter">The user filter</param>
+        /// <returns>The users</returns>
+        [Obsolete("No longer supported, use GetAll(string, OrganizationMembersFilter) instead")]
         IObservable<User> GetAll(string org, string filter);
 
         /// <summary>
@@ -56,7 +65,7 @@ namespace Octokit.Reactive
         /// <remarks>http://developer.github.com/v3/orgs/members/#public-members-list</remarks>
         /// <param name="org">The login for the organization</param>
         /// <returns></returns>
-        IObservable<User> GetPublic(string org);
+        IObservable<User> GetAllPublic(string org);
 
         /// <summary>
         /// Check if a user is, publicly or privately, a member of the organization.

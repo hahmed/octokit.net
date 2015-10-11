@@ -1,34 +1,22 @@
-﻿using Octokit;
-using Octokit.Tests.Integration;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Octokit;
+using Octokit.Tests.Integration;
 using Xunit;
+using Octokit.Tests.Integration.Helpers;
 
 public class DeploymentsClientTests : IDisposable
 {
-    IGitHubClient _gitHubClient;
-    IDeploymentsClient _deploymentsClient;
-    Repository _repository;
-    Commit _commit;
-    string _repositoryOwner;
+    private readonly IDeploymentsClient _deploymentsClient;
+    private readonly RepositoryContext _context;
+    private readonly Commit _commit;
 
     public DeploymentsClientTests()
     {
-        _gitHubClient = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-        {
-            Credentials = Helper.Credentials
-        };
+        var github = Helper.GetAuthenticatedClient();
 
-        _deploymentsClient = _gitHubClient.Repository.Deployment;
-
-        var newRepository = new NewRepository
-        {
-            Name = Helper.MakeNameWithTimestamp("public-repo"),
-            AutoInit = true
-        };
-
-        _repository = _gitHubClient.Repository.Create(newRepository).Result;
-        _repositoryOwner = _repository.Owner.Login;
+        _deploymentsClient = github.Repository.Deployment;
+        _context = github.CreateRepositoryContext("public-repo").Result;
 
         var blob = new NewBlob
         {
@@ -36,7 +24,7 @@ public class DeploymentsClientTests : IDisposable
             Encoding = EncodingType.Utf8
         };
 
-        var blobResult = _gitHubClient.GitDatabase.Blob.Create(_repositoryOwner, _repository.Name, blob).Result;
+        var blobResult = github.GitDatabase.Blob.Create(_context.RepositoryOwner, _context.RepositoryName, blob).Result;
 
         var newTree = new NewTree();
         newTree.Tree.Add(new NewTreeItem
@@ -47,17 +35,17 @@ public class DeploymentsClientTests : IDisposable
             Sha = blobResult.Sha
         });
 
-        var treeResult = _gitHubClient.GitDatabase.Tree.Create(_repositoryOwner, _repository.Name, newTree).Result;
+        var treeResult = github.GitDatabase.Tree.Create(_context.RepositoryOwner, _context.RepositoryName, newTree).Result;
         var newCommit = new NewCommit("test-commit", treeResult.Sha);
-        _commit = _gitHubClient.GitDatabase.Commit.Create(_repositoryOwner, _repository.Name, newCommit).Result;
+        _commit = github.GitDatabase.Commit.Create(_context.RepositoryOwner, _context.RepositoryName, newCommit).Result;
     }
   
     [IntegrationTest]
     public async Task CanCreateDeployment()
     {
-        var newDeployment = new NewDeployment { Ref = _commit.Sha, AutoMerge = false };
+        var newDeployment = new NewDeployment(_commit.Sha) { AutoMerge = false };
 
-        var deployment = await _deploymentsClient.Create(_repositoryOwner, _repository.Name, newDeployment);
+        var deployment = await _deploymentsClient.Create(_context.RepositoryOwner, _context.RepositoryName, newDeployment);
 
         Assert.NotNull(deployment);
     }
@@ -65,16 +53,16 @@ public class DeploymentsClientTests : IDisposable
     [IntegrationTest]
     public async Task CanGetDeployments()
     {
-        var newDeployment = new NewDeployment { Ref = _commit.Sha, AutoMerge = false };
-        await _deploymentsClient.Create(_repositoryOwner, _repository.Name, newDeployment);
-        
-        var deployments = await _deploymentsClient.GetAll(_repositoryOwner, _repository.Name);
+        var newDeployment = new NewDeployment(_commit.Sha) { AutoMerge = false };
+        await _deploymentsClient.Create(_context.RepositoryOwner, _context.RepositoryName, newDeployment);
+
+        var deployments = await _deploymentsClient.GetAll(_context.RepositoryOwner, _context.RepositoryName);
 
         Assert.NotEmpty(deployments);
     }
 
     public void Dispose()
     {
-        Helper.DeleteRepo(_repository);
+        _context.Dispose();
     }
 }

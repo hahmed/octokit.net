@@ -17,14 +17,11 @@ public class ObservableRespositoryDeployKeysClientTests : IDisposable
 
     public ObservableRespositoryDeployKeysClientTests()
     {
-        var github = new GitHubClient(new ProductHeaderValue("OctokitTests"))
-        {
-            Credentials = Helper.Credentials
-        };
+        var github = Helper.GetAuthenticatedClient();
 
         _client = new ObservableRepositoryDeployKeysClient(github);
         var repoName = Helper.MakeNameWithTimestamp("public-repo");
-        var result = github.Repository.Create(new NewRepository() { Name = repoName, AutoInit = true }).Result;
+        var result = github.Repository.Create(new NewRepository(repoName) { AutoInit = true }).Result;
         _repository = result;
         _owner = _repository.Owner.Login;
     }
