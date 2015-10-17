@@ -1,0 +1,12 @@
+# Site settings
+title: Octokit.net
+email: your-email@domain.com
+description: > # this means to ignore newlines until "baseurl:"
+  Octokit.net documentation
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "http://yourdomain.com" # the base hostname & protocol for your site
+twitter_username:
+github_username:
+
+# Build settings
+markdown: kramdown
